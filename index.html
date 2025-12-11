@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Class Control</title>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Smart Class</h1>
+            <p>IoT Control Panel</p>
+            <div class="status-badge" id="connection-status">
+                <div class="status-dot"></div>
+                <span>Đã kết nối</span>
+            </div>
+        </header>
+
+        <!-- Master Control -->
+        <div class="master-control">
+            <button class="btn-master" id="master-toggle">
+                <i class="fa-solid fa-power-off"></i> Tắt Tất Cả
+            </button>
+        </div>
+
+        <!-- Light Control Card -->
+        <div class="control-card" id="card-light">
+            <div class="card-header">
+                <div class="device-info">
+                    <div class="icon-container">
+                        <i class="fa-solid fa-lightbulb" id="light-icon"></i>
+                    </div>
+                    <div>
+                        <div class="device-name">Đèn Lớp Học</div>
+                        <div class="device-status" id="light-status">Đang Tắt</div>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="light-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Fan Control Card -->
+        <div class="control-card" id="card-fan">
+            <div class="card-header">
+                <div class="device-info">
+                    <div class="icon-container">
+                        <i class="fa-solid fa-fan" id="fan-icon"></i>
+                    </div>
+                    <div>
+                        <div class="device-name">Quạt Trần</div>
+                        <div class="device-status" id="fan-status">Đang Tắt</div>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="fan-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="fan-controls">
+                <div
+                    style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.85rem; color: rgba(255,255,255,0.8);">
+                    <span>Tốc độ gió</span>
+                    <span id="fan-speed-value">50%</span>
+                </div>
+                <div class="range-slider-container">
+                    <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
