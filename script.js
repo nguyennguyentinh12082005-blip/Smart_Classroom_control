@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const masterToggle = document.getElementById('master-toggle');
     const connectionStatus = document.getElementById('connection-status');
 
+    // Sensor Elements
+    const tempValue = document.getElementById('temp-value');
+    const humidValue = document.getElementById('humid-value');
+    const lightValValue = document.getElementById('light-val-value');
+
     // State Management
     let state = {
         light: false,
@@ -29,6 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
             connectionStatus.style.opacity = '1';
             connectionStatus.style.transform = 'translateY(0)';
             showToast('Đã kết nối với hệ thống', 'success');
+
+            // Start updating sensors
+            updateSensors();
+            setInterval(updateSensors, 3000);
         }, 1500);
     }
 
@@ -96,6 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleLight(false);
         toggleFan(false);
         showToast('Đã tắt tất cả thiết bị');
+    }
+
+    // --- Sensor Logic ---
+    function updateSensors() {
+        // Simulate random data
+        const temp = (25 + Math.random() * 5).toFixed(1);
+        const humid = (60 + Math.random() * 20).toFixed(0);
+        const light = (300 + Math.random() * 50).toFixed(0);
+
+        tempValue.textContent = temp;
+        humidValue.textContent = humid;
+        lightValValue.textContent = light;
+
+        // Update color based on values (optional)
     }
 
     // --- Mock API ---

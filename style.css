@@ -100,8 +100,23 @@ body::after {
 
 header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.school-logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+    transition: transform 0.3s ease;
+}
+
+.school-logo:hover {
+    transform: scale(1.1) rotate(5deg);
 }
 
 header h1 {
@@ -160,6 +175,85 @@ header p {
     100% {
         box-shadow: 0 0 0 0 rgba(0, 184, 148, 0);
     }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 184, 148, 0);
+    }
+}
+
+/* Sensor Dashboard */
+.sensor-dashboard {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.sensor-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.sensor-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-3px);
+}
+
+.icon-wrapper {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.icon-wrapper.temp {
+    background: rgba(255, 118, 117, 0.15);
+    color: #ff7675;
+}
+
+.icon-wrapper.humid {
+    background: rgba(116, 185, 255, 0.15);
+    color: #74b9ff;
+}
+
+.icon-wrapper.light {
+    background: rgba(253, 203, 110, 0.15);
+    color: #fdcb6e;
+}
+
+.sensor-info h3 {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    font-weight: 400;
+}
+
+.value-wrapper {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+}
+
+.value-wrapper span:first-child {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.unit {
+    font-size: 0.7rem;
+    color: var(--text-muted);
 }
 
 /* Glassmorphism Card */

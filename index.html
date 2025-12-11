@@ -13,6 +13,8 @@
 <body>
     <div class="container">
         <header>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Logo_HCMUTE.png/600px-Logo_HCMUTE.png"
+                alt="HCMUTE Logo" class="school-logo">
             <h1>Smart Class</h1>
             <p>IoT Control Panel</p>
             <div class="status-badge" id="connection-status">
@@ -20,6 +22,46 @@
                 <span>Đã kết nối</span>
             </div>
         </header>
+
+        <!-- Sensor Dashboard -->
+        <div class="sensor-dashboard">
+            <div class="sensor-card">
+                <div class="icon-wrapper temp">
+                    <i class="fa-solid fa-temperature-half"></i>
+                </div>
+                <div class="sensor-info">
+                    <h3>Nhiệt Độ</h3>
+                    <div class="value-wrapper">
+                        <span id="temp-value">--</span>
+                        <span class="unit">°C</span>
+                    </div>
+                </div>
+            </div>
+            <div class="sensor-card">
+                <div class="icon-wrapper humid">
+                    <i class="fa-solid fa-droplet"></i>
+                </div>
+                <div class="sensor-info">
+                    <h3>Độ Ẩm</h3>
+                    <div class="value-wrapper">
+                        <span id="humid-value">--</span>
+                        <span class="unit">%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="sensor-card">
+                <div class="icon-wrapper light">
+                    <i class="fa-solid fa-sun"></i>
+                </div>
+                <div class="sensor-info">
+                    <h3>Ánh Sáng</h3>
+                    <div class="value-wrapper">
+                        <span id="light-val-value">--</span>
+                        <span class="unit">Lux</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Master Control -->
         <div class="master-control">
