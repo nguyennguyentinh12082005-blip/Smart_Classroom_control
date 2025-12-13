@@ -11,27 +11,9 @@
 </head>
 
 <body>
-    <!-- Login Overlay -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="login-card">
-            <h2>Đăng Nhập</h2>
-            <p>Điều khiển lớp học thông minh</p>
-            <form id="login-form">
-                <div class="input-group">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="login-email" placeholder="Email" required>
-                </div>
-                <div class="input-group">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="login-password" placeholder="Mật khẩu" required>
-                </div>
-                <button type="submit" class="btn-login">Đăng Nhập</button>
-                <p id="login-error" class="login-error"></p>
-            </form>
-        </div>
-    </div>
+    <!-- Login Overlay Removed -->
 
-    <div class="container hidden" id="main-container">
+    <div class="container" id="main-container">
         <header>
             <div style="position: absolute; right: 0; top: 0;">
                 <button id="logout-btn" class="btn-logout" title="Đăng xuất">
@@ -154,6 +136,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
+    <script src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 

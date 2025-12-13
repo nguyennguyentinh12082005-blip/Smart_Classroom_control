@@ -1,30 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Firebase Configuration ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyD5TdgspR2HG4y97LdzbFtZ-LzdSloXsAE",
-        authDomain: "smart-classroom-1796a.firebaseapp.com",
-        databaseURL: "https://smart-classroom-1796a-default-rtdb.firebaseio.com",
-        projectId: "smart-classroom-1796a",
-        storageBucket: "smart-classroom-1796a.firebasestorage.app",
-        messagingSenderId: "432808052370",
-        appId: "1:432808052370:web:ae5ccf8abbe0b984a3884b",
-        measurementId: "G-QL0GG52SVL"
-    };
-
-    // Initialize Firebase
+    // Initialize Firebase (Config loaded from firebase-config.js)
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
-    const auth = firebase.auth(); // Init Auth
+    const auth = firebase.auth();
 
     // DOM Elements - Auth
-    const loginOverlay = document.getElementById('login-overlay');
-    const mainContainer = document.getElementById('main-container');
-    const loginForm = document.getElementById('login-form');
-    const loginEmail = document.getElementById('login-email');
-    const loginPassword = document.getElementById('login-password');
-    const loginError = document.getElementById('login-error');
     const logoutBtn = document.getElementById('logout-btn');
 
     // DOM Elements - Control
@@ -57,25 +39,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization & Listeners ---
     function init() {
-        // Auth Listener
+        // Auth Listener - Redirect if not logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
                 // User is signed in
                 console.log("Logged in as:", user.email);
-                loginOverlay.classList.add('hidden');
-                mainContainer.classList.remove('hidden');
 
                 // Initialize Listeners
                 setupConnectionListener();
                 setupSensorListeners();
                 setupDeviceListeners();
             } else {
-                // User is signed out
-                console.log("User logged out");
-                loginOverlay.classList.remove('hidden');
-                mainContainer.classList.add('hidden');
-
-                // Optional: Detach listeners or just leave them (simple app)
+                // User is signed out -> Redirect to Login
+                window.location.href = 'login.html';
             }
         });
     }
@@ -248,37 +224,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
-    // Auth Events
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = loginEmail.value;
-        const password = loginPassword.value;
-        loginError.textContent = ''; // Clear prev error
-
-        auth.signInWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                // Signed in
-                showToast('Đăng nhập thành công', 'success');
-                loginForm.reset();
-            })
-            .catch((error) => {
-                const errorCode = error.code;
-                const errorMessage = error.message;
-                console.error("Login error:", errorCode, errorMessage);
-
-                if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
-                    loginError.textContent = 'Email hoặc mật khẩu không đúng.';
-                } else if (errorCode === 'auth/invalid-email') {
-                    loginError.textContent = 'Email không hợp lệ.';
-                } else {
-                    loginError.textContent = 'Lỗi đăng nhập: ' + errorMessage;
-                }
-            });
-    });
 
     logoutBtn.addEventListener('click', () => {
         auth.signOut().then(() => {
-            showToast('Đã đăng xuất');
+            // Check auth state listener handles redirect, but we can force it too
         }).catch((error) => {
             console.error("Logout error", error);
         });
