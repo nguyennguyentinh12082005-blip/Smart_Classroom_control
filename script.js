@@ -84,10 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Presence -> SmartHome/PhatHienNguoi
         db.ref('SmartHome/PhatHienNguoi').on('value', (snapshot) => {
             const val = snapshot.val();
-            // Assume 1 = Có người, 0 = Không
-            const hasPeople = val === 1 || val === '1' || val === true;
-            presenceValue.textContent = hasPeople ? 'Có' : 'Không';
-            presenceValue.style.color = hasPeople ? '#00b894' : '#fab1a0';
+            // Robust check: 1, '1', true, 'motion', 'detected'
+            const hasMotion = val === 1 || val === '1' || val === true ||
+                (typeof val === 'string' && ['motion', 'detected', 'co', 'yes'].includes(val.toLowerCase()));
+
+            presenceValue.textContent = hasMotion ? 'Có' : 'Không';
+            presenceValue.style.color = hasMotion ? '#00b894' : '#fab1a0';
         });
 
         // Light Sensor -> SmartHome/AnhSang
