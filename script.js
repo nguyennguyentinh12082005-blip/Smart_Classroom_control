@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const val = snapshot.val();
             // Assume 1 = Có người, 0 = Không
             const hasPeople = val === 1 || val === '1' || val === true;
-            presenceValue.textContent = hasPeople ? 'Có người' : 'Vắng';
+            presenceValue.textContent = hasPeople ? 'Có' : 'Không';
             presenceValue.style.color = hasPeople ? '#00b894' : '#fab1a0';
         });
 
