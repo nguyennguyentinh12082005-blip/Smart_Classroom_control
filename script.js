@@ -16,8 +16,18 @@ document.addEventListener('DOMContentLoaded', () => {
         firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.database();
+    const auth = firebase.auth(); // Init Auth
 
-    // DOM Elements
+    // DOM Elements - Auth
+    const loginOverlay = document.getElementById('login-overlay');
+    const mainContainer = document.getElementById('main-container');
+    const loginForm = document.getElementById('login-form');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // DOM Elements - Control
     const lightToggle = document.getElementById('light-toggle');
     const lightStatus = document.getElementById('light-status');
     const lightIcon = document.getElementById('light-icon');
@@ -47,6 +57,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization & Listeners ---
     function init() {
+        // Auth Listener
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                console.log("Logged in as:", user.email);
+                loginOverlay.classList.add('hidden');
+                mainContainer.classList.remove('hidden');
+
+                // Initialize Listeners
+                setupConnectionListener();
+                setupSensorListeners();
+                setupDeviceListeners();
+            } else {
+                // User is signed out
+                console.log("User logged out");
+                loginOverlay.classList.remove('hidden');
+                mainContainer.classList.add('hidden');
+
+                // Optional: Detach listeners or just leave them (simple app)
+            }
+        });
+    }
+
+    function setupConnectionListener() {
         // Checking connection usually happens via .info/connected
         const connectedRef = db.ref(".info/connected");
         connectedRef.on("value", (snap) => {
@@ -60,9 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 connectionStatus.querySelector('.status-dot').style.backgroundColor = '#ff7675';
             }
         });
-
-        setupSensorListeners();
-        setupDeviceListeners();
     }
 
     // --- Firebase Listeners ---
@@ -217,6 +248,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event Listeners ---
+    // Auth Events
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = loginEmail.value;
+        const password = loginPassword.value;
+        loginError.textContent = ''; // Clear prev error
+
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Signed in
+                showToast('Đăng nhập thành công', 'success');
+                loginForm.reset();
+            })
+            .catch((error) => {
+                const errorCode = error.code;
+                const errorMessage = error.message;
+                console.error("Login error:", errorCode, errorMessage);
+
+                if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+                    loginError.textContent = 'Email hoặc mật khẩu không đúng.';
+                } else if (errorCode === 'auth/invalid-email') {
+                    loginError.textContent = 'Email không hợp lệ.';
+                } else {
+                    loginError.textContent = 'Lỗi đăng nhập: ' + errorMessage;
+                }
+            });
+    });
+
+    logoutBtn.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            showToast('Đã đăng xuất');
+        }).catch((error) => {
+            console.error("Logout error", error);
+        });
+    });
+
+    // Control Events
     lightToggle.addEventListener('change', (e) => {
         // Determine user intent vs programatic update
         // (For simple toggle, just sending the new state is fine)
