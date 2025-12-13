@@ -67,21 +67,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Firebase Listeners ---
     function setupSensorListeners() {
-        // Temperature
-        db.ref('sensors/temperature').on('value', (snapshot) => {
+        // Temperature -> SmartHome/NhietDo
+        db.ref('SmartHome/NhietDo').on('value', (snapshot) => {
             const val = snapshot.val();
+            console.log("Nhiệt độ (SmartHome/NhietDo):", val);
             tempValue.textContent = val !== null ? val : '--';
         });
 
-        // Humidity
-        db.ref('sensors/humidity').on('value', (snapshot) => {
-            const val = snapshot.val();
-            humidValue.textContent = val !== null ? val : '--';
-        });
+        // Humidity -> Không có trong DB, tạm thời comment out hoặc để trống
+        // db.ref('SmartHome/DoAm').on('value', (snapshot) => { ... });
+        // Sẽ hiển thị -- cho độ ẩm
 
-        // Light Sensor
-        db.ref('sensors/light_level').on('value', (snapshot) => {
+        // Light Sensor -> SmartHome/AnhSang
+        db.ref('SmartHome/AnhSang').on('value', (snapshot) => {
             const val = snapshot.val();
+            console.log("Ánh sáng (SmartHome/AnhSang):", val);
             lightValValue.textContent = val !== null ? val : '--';
         });
     }
