@@ -164,30 +164,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Actions (Write to Firebase) ---
     function toggleLight(isOn) {
-        // Optimistic UI update handled by listener, but we send command
-        const val = isOn ? 'on' : 'off'; // Standardize as string or bool based on preferred schema
-        db.ref('devices/light/state').set(val)
-            .then(() => showToast(`Đã ${isOn ? 'bật' : 'tắt'} đèn`, 'success'))
+        const val = isOn ? 1 : 0;
+        db.ref('SmartHome/Den').set(val)
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
     function toggleFan(isOn) {
-        const val = isOn ? 'on' : 'off';
-        db.ref('devices/fan/state').set(val)
-            .then(() => showToast(`Đã ${isOn ? 'bật' : 'tắt'} quạt`, 'success'))
+        const val = isOn ? 1 : 0;
+        db.ref('SmartHome/Quat').set(val)
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
     function setFanSpeed(value) {
-        db.ref('devices/fan/speed').set(parseInt(value))
-            // No toast for speed to avoid spam
+        db.ref('SmartHome/TocDoQuat').set(parseInt(value))
             .catch(err => console.error(err));
     }
 
     function turnAllOff() {
         const updates = {};
-        updates['devices/light/state'] = 'off';
-        updates['devices/fan/state'] = 'off';
+        updates['SmartHome/Den'] = 0;
+        updates['SmartHome/Quat'] = 0;
 
         db.ref().update(updates)
             .then(() => showToast('Đã tắt tất cả thiết bị'))
