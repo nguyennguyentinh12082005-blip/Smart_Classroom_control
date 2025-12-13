@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sensor Elements
     const tempValue = document.getElementById('temp-value');
-    const humidValue = document.getElementById('humid-value');
+    const presenceValue = document.getElementById('presence-value'); // Changed from humidValue
     const lightValValue = document.getElementById('light-val-value');
 
     // State Management (Local mirror of DB)
@@ -81,9 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
             tempValue.textContent = val !== null ? val : '--';
         });
 
-        // Humidity -> Không có trong DB, tạm thời comment out hoặc để trống
-        // db.ref('SmartHome/DoAm').on('value', (snapshot) => { ... });
-        // Sẽ hiển thị -- cho độ ẩm
+        // Presence -> SmartHome/PhatHienNguoi
+        db.ref('SmartHome/PhatHienNguoi').on('value', (snapshot) => {
+            const val = snapshot.val();
+            // Assume 1 = Có người, 0 = Không
+            const hasPeople = val === 1 || val === '1' || val === true;
+            presenceValue.textContent = hasPeople ? 'Có người' : 'Vắng';
+            presenceValue.style.color = hasPeople ? '#00b894' : '#fab1a0';
+        });
 
         // Light Sensor -> SmartHome/AnhSang
         db.ref('SmartHome/AnhSang').on('value', (snapshot) => {
