@@ -385,6 +385,7 @@ body:has(.login-wrapper) {
     margin-bottom: 10px;
     background: linear-gradient(to right, #fff, #a29bfe);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 800;
 }
