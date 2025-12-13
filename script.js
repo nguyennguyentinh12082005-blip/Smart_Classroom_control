@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyD5TdgspR2HG4y97LdzbFtZ-LzdSloXsAE",
+        authDomain: "smart-classroom-1796a.firebaseapp.com",
+        databaseURL: "https://smart-classroom-1796a-default-rtdb.firebaseio.com",
+        projectId: "smart-classroom-1796a",
+        storageBucket: "smart-classroom-1796a.firebasestorage.app",
+        messagingSenderId: "432808052370",
+        appId: "1:432808052370:web:ae5ccf8abbe0b984a3884b",
+        measurementId: "G-QL0GG52SVL"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.database();
+
     // DOM Elements
     const lightToggle = document.getElementById('light-toggle');
     const lightStatus = document.getElementById('light-status');
@@ -20,25 +38,90 @@ document.addEventListener('DOMContentLoaded', () => {
     const humidValue = document.getElementById('humid-value');
     const lightValValue = document.getElementById('light-val-value');
 
-    // State Management
+    // State Management (Local mirror of DB)
     let state = {
         light: false,
         fan: false,
         fanSpeed: 50
     };
 
-    // --- Initialization ---
+    // --- Initialization & Listeners ---
     function init() {
-        // Simulate connection delay
-        setTimeout(() => {
-            connectionStatus.style.opacity = '1';
-            connectionStatus.style.transform = 'translateY(0)';
-            showToast('Đã kết nối với hệ thống', 'success');
+        // Checking connection usually happens via .info/connected
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                connectionStatus.style.opacity = '1';
+                connectionStatus.querySelector('span').textContent = 'Đã kết nối';
+                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#00b894';
+            } else {
+                connectionStatus.style.opacity = '0.7';
+                connectionStatus.querySelector('span').textContent = 'Mất kết nối';
+                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#ff7675';
+            }
+        });
 
-            // Start updating sensors
-            updateSensors();
-            setInterval(updateSensors, 3000);
-        }, 1500);
+        setupSensorListeners();
+        setupDeviceListeners();
+    }
+
+    // --- Firebase Listeners ---
+    function setupSensorListeners() {
+        // Temperature
+        db.ref('sensors/temperature').on('value', (snapshot) => {
+            const val = snapshot.val();
+            tempValue.textContent = val !== null ? val : '--';
+        });
+
+        // Humidity
+        db.ref('sensors/humidity').on('value', (snapshot) => {
+            const val = snapshot.val();
+            humidValue.textContent = val !== null ? val : '--';
+        });
+
+        // Light Sensor
+        db.ref('sensors/light_level').on('value', (snapshot) => {
+            const val = snapshot.val();
+            lightValValue.textContent = val !== null ? val : '--';
+        });
+    }
+
+    function setupDeviceListeners() {
+        // Light State
+        db.ref('devices/light/state').on('value', (snapshot) => {
+            // Expect boolean or "on"/"off" string
+            const val = snapshot.val();
+            const isOn = val === true || val === 'on' || val === 1;
+
+            state.light = isOn;
+            // Only update UI if mismatch to prevent loop flicker (though safe with checkbox)
+            if (lightToggle.checked !== isOn) {
+                lightToggle.checked = isOn;
+            }
+            updateLightUI();
+        });
+
+        // Fan State
+        db.ref('devices/fan/state').on('value', (snapshot) => {
+            const val = snapshot.val();
+            const isOn = val === true || val === 'on' || val === 1;
+
+            state.fan = isOn;
+            if (fanToggle.checked !== isOn) {
+                fanToggle.checked = isOn;
+            }
+            updateFanUI();
+        });
+
+        // Fan Speed
+        db.ref('devices/fan/speed').on('value', (snapshot) => {
+            const val = snapshot.val();
+            if (val !== null) {
+                state.fanSpeed = parseInt(val);
+                fanSpeed.value = state.fanSpeed; // Update slider position
+                updateFanUI();
+            }
+        });
     }
 
     // --- UI Updates ---
@@ -79,53 +162,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Actions ---
+    // --- Actions (Write to Firebase) ---
     function toggleLight(isOn) {
-        state.light = isOn;
-        lightToggle.checked = isOn;
-        updateLightUI();
-        sendCommand('light', 'state', isOn ? 'on' : 'off');
+        // Optimistic UI update handled by listener, but we send command
+        const val = isOn ? 'on' : 'off'; // Standardize as string or bool based on preferred schema
+        db.ref('devices/light/state').set(val)
+            .then(() => showToast(`Đã ${isOn ? 'bật' : 'tắt'} đèn`, 'success'))
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
     function toggleFan(isOn) {
-        state.fan = isOn;
-        fanToggle.checked = isOn;
-        updateFanUI();
-        sendCommand('fan', 'state', isOn ? 'on' : 'off');
+        const val = isOn ? 'on' : 'off';
+        db.ref('devices/fan/state').set(val)
+            .then(() => showToast(`Đã ${isOn ? 'bật' : 'tắt'} quạt`, 'success'))
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
     function setFanSpeed(value) {
-        state.fanSpeed = value;
-        updateFanUI();
-        // Debounce sending command for slider
-        // sendCommand('fan', 'speed', value); 
+        db.ref('devices/fan/speed').set(parseInt(value))
+            // No toast for speed to avoid spam
+            .catch(err => console.error(err));
     }
 
     function turnAllOff() {
-        toggleLight(false);
-        toggleFan(false);
-        showToast('Đã tắt tất cả thiết bị');
-    }
+        const updates = {};
+        updates['devices/light/state'] = 'off';
+        updates['devices/fan/state'] = 'off';
 
-    // --- Sensor Logic ---
-    function updateSensors() {
-        // Simulate random data
-        const temp = (25 + Math.random() * 5).toFixed(1);
-        const humid = (60 + Math.random() * 20).toFixed(0);
-        const light = (300 + Math.random() * 50).toFixed(0);
-
-        tempValue.textContent = temp;
-        humidValue.textContent = humid;
-        lightValValue.textContent = light;
-
-        // Update color based on values (optional)
-    }
-
-    // --- Mock API ---
-    function sendCommand(device, param, value) {
-        console.log(`Sending: ${device} ${param} = ${value}`);
-        // Simulate network request
-        // fetch(`/api/${device}?${param}=${value}`);
+        db.ref().update(updates)
+            .then(() => showToast('Đã tắt tất cả thiết bị'))
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
     // --- Toast Notification ---
@@ -133,49 +199,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = 'toast';
+        if (type === 'error') toast.style.borderLeft = '4px solid #ff7675';
 
         let icon = '<i class="fa-solid fa-info-circle"></i>';
         if (type === 'success') icon = '<i class="fa-solid fa-check-circle" style="color: #00b894;"></i>';
+        if (type === 'error') icon = '<i class="fa-solid fa-exclamation-circle" style="color: #ff7675;"></i>';
 
         toast.innerHTML = `${icon} <span>${message}</span>`;
         container.appendChild(toast);
 
-        // Trigger animation
         requestAnimationFrame(() => {
             toast.classList.add('show');
         });
 
-        // Remove after 3s
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => {
-                container.removeChild(toast);
+                if (toast.parentElement) container.removeChild(toast);
             }, 400);
         }, 3000);
     }
 
     // --- Event Listeners ---
     lightToggle.addEventListener('change', (e) => {
+        // Determine user intent vs programatic update
+        // (For simple toggle, just sending the new state is fine)
         toggleLight(e.target.checked);
-        if (e.target.checked) showToast('Đã bật đèn lớp học', 'success');
     });
 
     fanToggle.addEventListener('change', (e) => {
         toggleFan(e.target.checked);
-        if (e.target.checked) showToast('Đã bật quạt trần', 'success');
     });
 
-    fanSpeed.addEventListener('input', (e) => {
+    fanSpeed.addEventListener('change', (e) => { // 'change' fires only on release
         setFanSpeed(e.target.value);
     });
 
-    fanSpeed.addEventListener('change', (e) => {
-        sendCommand('fan', 'speed', e.target.value);
+    // Optional: Update UI while dragging slider without sending command yet
+    fanSpeed.addEventListener('input', (e) => {
+        fanSpeedValue.textContent = `${e.target.value}%`;
     });
 
     masterToggle.addEventListener('click', turnAllOff);
 
-    // Add dynamic styles for animation
     // Run Init
     init();
 });
