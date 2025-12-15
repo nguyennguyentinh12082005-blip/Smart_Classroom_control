@@ -11,9 +11,30 @@
 </head>
 
 <body>
-    <!-- Login Overlay Removed -->
+    <!-- Login Section -->
+    <div class="login-wrapper" id="login-section">
+        <div class="login-card">
+            <div class="logo-container">
+                <img src="logo.jpg" alt="HCMUTE Logo" class="login-logo">
+            </div>
+            <h2>Chào Mừng</h2>
+            <p>Hệ thống IoT Smart Class</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="login-email" placeholder="Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="login-password" placeholder="Mật khẩu" required>
+                </div>
+                <button type="submit" class="btn-login">Đăng Nhập</button>
+                <p id="login-error" class="login-error"></p>
+            </form>
+        </div>
+    </div>
 
-    <div class="container" id="main-container">
+    <div class="container" id="main-container" style="display: none;">
         <header>
             <div style="position: absolute; right: 0; top: 0;">
                 <button id="logout-btn" class="btn-logout" title="Đăng xuất">

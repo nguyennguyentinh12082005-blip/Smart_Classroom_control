@@ -6,7 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const db = firebase.database();
     const auth = firebase.auth();
 
-    // DOM Elements - Auth
+    // DOM Elements - Sections
+    const loginSection = document.getElementById('login-section');
+    const mainContainer = document.getElementById('main-container');
+
+    // DOM Elements - Auth Logic
+    const loginForm = document.getElementById('login-form');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginError = document.getElementById('login-error');
     const logoutBtn = document.getElementById('logout-btn');
 
     // DOM Elements - Control
@@ -27,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sensor Elements
     const tempValue = document.getElementById('temp-value');
-    const presenceValue = document.getElementById('presence-value'); // Changed from humidValue
+    const presenceValue = document.getElementById('presence-value');
     const lightValValue = document.getElementById('light-val-value');
 
     // State Management (Local mirror of DB)
@@ -39,19 +47,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization & Listeners ---
     function init() {
-        // Auth Listener - Redirect if not logged in
+        // Auth Listener - Switch Views
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in
+                // User is signed in -> Show Dashboard
                 console.log("Logged in as:", user.email);
+
+                if (loginSection) loginSection.style.display = 'none';
+                if (mainContainer) mainContainer.style.display = 'block';
 
                 // Initialize Listeners
                 setupConnectionListener();
                 setupSensorListeners();
                 setupDeviceListeners();
             } else {
-                // User is signed out -> Redirect to Login
-                window.location.href = 'login.html';
+                // User is signed out -> Show Login
+                if (loginSection) loginSection.style.display = 'flex';
+                if (mainContainer) mainContainer.style.display = 'none';
             }
         });
     }
@@ -77,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Temperature -> SmartHome/NhietDo
         db.ref('SmartHome/NhietDo').on('value', (snapshot) => {
             const val = snapshot.val();
-            console.log("Nhiệt độ (SmartHome/NhietDo):", val);
             tempValue.textContent = val !== null ? val : '--';
         });
 
@@ -95,7 +106,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Light Sensor -> SmartHome/AnhSang
         db.ref('SmartHome/AnhSang').on('value', (snapshot) => {
             const val = snapshot.val();
-            console.log("Ánh sáng (SmartHome/AnhSang):", val);
             lightValValue.textContent = val !== null ? val : '--';
         });
     }
@@ -232,35 +242,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
 
-    logoutBtn.addEventListener('click', () => {
-        auth.signOut().then(() => {
-            // Check auth state listener handles redirect, but we can force it too
-        }).catch((error) => {
-            console.error("Logout error", error);
+    // Login Handle
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            loginError.textContent = ''; // Clear prev error
+
+            auth.signInWithEmailAndPassword(email, password)
+                .catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error("Login error:", errorCode, errorMessage);
+
+                    if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+                        loginError.textContent = 'Email hoặc mật khẩu không đúng.';
+                    } else if (errorCode === 'auth/invalid-email') {
+                        loginError.textContent = 'Email không hợp lệ.';
+                    } else {
+                        loginError.textContent = 'Lỗi đăng nhập: ' + errorMessage;
+                    }
+                });
         });
-    });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut().catch((error) => {
+                console.error("Logout error", error);
+            });
+        });
+    }
 
     // Control Events
-    lightToggle.addEventListener('change', (e) => {
-        // Determine user intent vs programatic update
-        // (For simple toggle, just sending the new state is fine)
-        toggleLight(e.target.checked);
-    });
+    if (lightToggle) {
+        lightToggle.addEventListener('change', (e) => {
+            toggleLight(e.target.checked);
+        });
+    }
 
-    fanToggle.addEventListener('change', (e) => {
-        toggleFan(e.target.checked);
-    });
+    if (fanToggle) {
+        fanToggle.addEventListener('change', (e) => {
+            toggleFan(e.target.checked);
+        });
+    }
 
-    fanSpeed.addEventListener('change', (e) => { // 'change' fires only on release
-        setFanSpeed(e.target.value);
-    });
+    if (fanSpeed) {
+        fanSpeed.addEventListener('change', (e) => {
+            setFanSpeed(e.target.value);
+        });
 
-    // Optional: Update UI while dragging slider without sending command yet
-    fanSpeed.addEventListener('input', (e) => {
-        fanSpeedValue.textContent = `${e.target.value}%`;
-    });
+        fanSpeed.addEventListener('input', (e) => {
+            fanSpeedValue.textContent = `${e.target.value}%`;
+        });
+    }
 
-    masterToggle.addEventListener('click', turnAllOff);
+    if (masterToggle) {
+        masterToggle.addEventListener('click', turnAllOff);
+    }
 
     // Run Init
     init();
