@@ -418,14 +418,16 @@ input:checked+.slider:before {
 .master-control {
     display: flex;
     justify-content: center;
+    gap: 15px;
     margin-bottom: 20px;
 }
 
 .btn-master {
     background: #fff;
-    color: var(--danger-color);
-    border: 1px solid #fab1a0;
-    padding: 10px 25px;
+    border: 1px solid transparent;
+    /* Generic border */
+    padding: 10px 20px;
+    /* Slightly wider */
     border-radius: 30px;
     cursor: pointer;
     font-family: 'Outfit', sans-serif;
@@ -435,14 +437,30 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 4px 10px rgba(255, 118, 117, 0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    /* Generic shadow */
 }
 
-.btn-master:hover {
+.btn-master.off {
+    color: var(--danger-color);
+    border-color: #fab1a0;
+}
+
+.btn-master.off:hover {
     background: var(--danger-color);
     color: #fff;
-    transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(255, 118, 117, 0.3);
+}
+
+.btn-master.on {
+    color: var(--success-color);
+    border-color: #55efc4;
+}
+
+.btn-master.on:hover {
+    background: var(--success-color);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(0, 184, 148, 0.3);
 }
 
 /* --- LOGIN PAGE STYLES (Theme Adapted) --- */

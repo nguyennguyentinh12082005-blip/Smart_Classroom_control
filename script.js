@@ -207,6 +207,18 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
+    function turnAllOn() {
+        const updates = {};
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            updates[`SmartHome/Den${i}`] = 1;
+            updates[`SmartHome/Quat${i}`] = 1;
+        }
+
+        db.ref().update(updates)
+            .then(() => showToast('Đã bật tất cả thiết bị', 'success'))
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    }
+
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
@@ -225,15 +237,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // We bind loop events here
 
     // Auth
+    // Auth
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value)
+
+            // Set persistence to SESSION so closing tab clears auth
+            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+                .then(() => {
+                    return auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value);
+                })
                 .catch(err => loginError.textContent = "Lỗi: " + err.message);
         });
     }
     if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
-    if (masterToggle) masterToggle.addEventListener('click', turnAllOff);
+
+    // Master Controls
+    const masterOff = document.getElementById('master-off');
+    const masterOn = document.getElementById('master-on');
+
+    if (masterOff) masterOff.addEventListener('click', turnAllOff);
+    if (masterOn) masterOn.addEventListener('click', turnAllOn);
 
     // Device Controls (Using Delegation for cleaner code or just Loop)
     // Since IDs are static, loop is fine.
