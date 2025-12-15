@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Firebase (Config loaded from firebase-config.js)
+    // Initialize Firebase
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
@@ -10,58 +10,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginSection = document.getElementById('login-section');
     const mainContainer = document.getElementById('main-container');
 
-    // DOM Elements - Auth Logic
+    // Auth Elements
     const loginForm = document.getElementById('login-form');
     const loginEmail = document.getElementById('login-email');
     const loginPassword = document.getElementById('login-password');
     const loginError = document.getElementById('login-error');
     const logoutBtn = document.getElementById('logout-btn');
 
-    // DOM Elements - Control
-    const lightToggle = document.getElementById('light-toggle');
-    const lightStatus = document.getElementById('light-status');
-    const lightIcon = document.getElementById('light-icon');
-    const cardLight = document.getElementById('card-light');
-
-    const fanToggle = document.getElementById('fan-toggle');
-    const fanStatus = document.getElementById('fan-status');
-    const fanSpeed = document.getElementById('fan-speed');
-    const fanSpeedValue = document.getElementById('fan-speed-value');
-    const fanIcon = document.getElementById('fan-icon');
-    const cardFan = document.getElementById('card-fan');
-
+    // Master Control
     const masterToggle = document.getElementById('master-toggle');
     const connectionStatus = document.getElementById('connection-status');
 
-    // Sensor Elements
+    // Sensors
     const tempValue = document.getElementById('temp-value');
     const presenceValue = document.getElementById('presence-value');
     const lightValValue = document.getElementById('light-val-value');
 
-    // State Management (Local mirror of DB)
+    // Config
+    const DEVICE_COUNT = 3;
+
+    // State Management
     let state = {
-        light: false,
-        fan: false,
-        fanSpeed: 50
+        lights: [false, false, false], // Index 0 is unused, usage 1-3
+        fans: [false, false, false],
+        fanSpeeds: [50, 50, 50]
     };
 
-    // --- Initialization & Listeners ---
+    // --- Initialization ---
     function init() {
-        // Auth Listener - Switch Views
         auth.onAuthStateChanged((user) => {
             if (user) {
-                // User is signed in -> Show Dashboard
-                console.log("Logged in as:", user.email);
-
+                console.log("Logged in:", user.email);
                 if (loginSection) loginSection.style.display = 'none';
                 if (mainContainer) mainContainer.style.display = 'block';
 
-                // Initialize Listeners
                 setupConnectionListener();
                 setupSensorListeners();
                 setupDeviceListeners();
             } else {
-                // User is signed out -> Show Login
                 if (loginSection) loginSection.style.display = 'flex';
                 if (mainContainer) mainContainer.style.display = 'none';
             }
@@ -69,9 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupConnectionListener() {
-        // Checking connection usually happens via .info/connected
-        const connectedRef = db.ref(".info/connected");
-        connectedRef.on("value", (snap) => {
+        db.ref(".info/connected").on("value", (snap) => {
             if (snap.val() === true) {
                 connectionStatus.style.opacity = '1';
                 connectionStatus.querySelector('span').textContent = 'Đã kết nối';
@@ -84,224 +68,201 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Firebase Listeners ---
+    // --- Sensors ---
     function setupSensorListeners() {
-        // Temperature -> SmartHome/NhietDo
-        db.ref('SmartHome/NhietDo').on('value', (snapshot) => {
-            const val = snapshot.val();
-            tempValue.textContent = val !== null ? val : '--';
+        db.ref('SmartHome/NhietDo').on('value', snap => {
+            tempValue.textContent = snap.val() !== null ? snap.val() : '--';
         });
 
-        // Presence -> SmartHome/PhatHienNguoi
-        db.ref('SmartHome/PhatHienNguoi').on('value', (snapshot) => {
-            const val = snapshot.val();
-            // Robust check: 1, '1', true, 'motion', 'detected'
-            const hasMotion = val === 1 || val === '1' || val === true ||
-                (typeof val === 'string' && ['motion', 'detected', 'co', 'yes'].includes(val.toLowerCase()));
-
+        db.ref('SmartHome/PhatHienNguoi').on('value', snap => {
+            const val = snap.val();
+            const hasMotion = val == 1 || val === true || val === '1' || val === 'motion';
             presenceValue.textContent = hasMotion ? 'Có' : 'Không';
-            presenceValue.style.color = hasMotion ? '#00b894' : '#fab1a0';
+            presenceValue.style.color = hasMotion ? '#00b894' : '#fab1a0'; // Green vs Soft Red
         });
 
-        // Light Sensor -> SmartHome/AnhSang
-        db.ref('SmartHome/AnhSang').on('value', (snapshot) => {
-            const val = snapshot.val();
-            lightValValue.textContent = val !== null ? val : '--';
+        db.ref('SmartHome/AnhSang').on('value', snap => {
+            lightValValue.textContent = snap.val() !== null ? snap.val() : '--';
         });
     }
 
+    // --- Devices Listener & UI ---
     function setupDeviceListeners() {
-        // Light State
-        db.ref('devices/light/state').on('value', (snapshot) => {
-            // Expect boolean or "on"/"off" string
-            const val = snapshot.val();
-            const isOn = val === true || val === 'on' || val === 1;
+        // LIGHTS LOOP (1 to 3)
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            // Firebase Path: SmartHome/Den1, SmartHome/Den2...
+            db.ref(`SmartHome/Den${i}`).on('value', (snap) => {
+                const isOn = snap.val() == 1 || snap.val() === true;
+                state.lights[i] = isOn;
 
-            state.light = isOn;
-            // Only update UI if mismatch to prevent loop flicker (though safe with checkbox)
-            if (lightToggle.checked !== isOn) {
-                lightToggle.checked = isOn;
-            }
-            updateLightUI();
-        });
+                // Update UI
+                const toggle = document.getElementById(`light-toggle-${i}`);
+                if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
+                updateLightUI(i, isOn);
+            });
 
-        // Fan State
-        db.ref('devices/fan/state').on('value', (snapshot) => {
-            const val = snapshot.val();
-            const isOn = val === true || val === 'on' || val === 1;
+            // FANS LOOP (1 to 3)
+            // State Path: SmartHome/Quat1...
+            db.ref(`SmartHome/Quat${i}`).on('value', (snap) => {
+                const isOn = snap.val() == 1 || snap.val() === true;
+                state.fans[i] = isOn;
 
-            state.fan = isOn;
-            if (fanToggle.checked !== isOn) {
-                fanToggle.checked = isOn;
-            }
-            updateFanUI();
-        });
+                const toggle = document.getElementById(`fan-toggle-${i}`);
+                if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
+                updateFanUI(i, isOn);
+            });
 
-        // Fan Speed
-        db.ref('devices/fan/speed').on('value', (snapshot) => {
-            const val = snapshot.val();
-            if (val !== null) {
-                state.fanSpeed = parseInt(val);
-                fanSpeed.value = state.fanSpeed; // Update slider position
-                updateFanUI();
-            }
-        });
-    }
+            // Fan Speed Path: SmartHome/TocDoQuat1...
+            db.ref(`SmartHome/TocDoQuat${i}`).on('value', (snap) => {
+                const val = snap.val();
+                if (val !== null) {
+                    state.fanSpeeds[i] = parseInt(val);
+                    const slider = document.getElementById(`fan-speed-${i}`);
+                    if (slider) slider.value = state.fanSpeeds[i];
 
-    // --- UI Updates ---
-    function updateLightUI() {
-        lightStatus.textContent = state.light ? 'Đang Bật' : 'Đang Tắt';
-        lightStatus.style.color = state.light ? '#fff' : 'rgba(255,255,255,0.7)';
+                    const label = document.getElementById(`fan-speed-value-${i}`);
+                    if (label) label.textContent = `${state.fanSpeeds[i]}%`;
 
-        if (state.light) {
-            lightIcon.style.color = '#ffeaa7';
-            lightIcon.style.textShadow = '0 0 20px #ffeaa7';
-            cardLight.style.borderColor = 'rgba(255, 234, 167, 0.5)';
-            cardLight.style.boxShadow = '0 0 20px rgba(255, 234, 167, 0.1)';
-        } else {
-            lightIcon.style.color = 'rgba(255, 255, 255, 0.8)';
-            lightIcon.style.textShadow = 'none';
-            cardLight.style.borderColor = 'rgba(255, 255, 255, 0.1)';
-            cardLight.style.boxShadow = 'var(--glass-shadow)';
+                    // Update animation speed if fan is on
+                    updateFanAnimation(i);
+                }
+            });
         }
     }
 
-    function updateFanUI() {
-        fanStatus.textContent = state.fan ? 'Đang Bật' : 'Đang Tắt';
-        fanStatus.style.color = state.fan ? '#fff' : 'rgba(255,255,255,0.7)';
-        fanSpeedValue.textContent = `${state.fanSpeed}%`;
+    function updateLightUI(index, isOn) {
+        const status = document.getElementById(`light-status-${index}`);
+        const icon = document.getElementById(`light-icon-${index}`);
+        const card = document.getElementById(`card-light-${index}`);
+        const container = card.querySelector('.icon-container');
 
-        if (state.fan) {
-            fanIcon.classList.add('spin-animation');
-            cardFan.classList.add('active');
-            // Calculate animation speed based on slider (0.2s to 2s)
-            const animSpeed = 2.2 - (state.fanSpeed / 100 * 2);
-            fanIcon.style.animationDuration = `${animSpeed}s`;
+        if (status) status.textContent = isOn ? 'Đang Bật' : 'Đang Tắt';
 
-            cardFan.style.borderColor = 'rgba(116, 185, 255, 0.5)';
+        if (isOn) {
+            card.classList.add('active');
+            // Icon color handled by CSS .active .icon-container
         } else {
-            fanIcon.classList.remove('spin-animation');
-            cardFan.classList.remove('active');
-            cardFan.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+            card.classList.remove('active');
         }
     }
 
-    // --- Actions (Write to Firebase) ---
-    function toggleLight(isOn) {
-        const val = isOn ? 1 : 0;
-        db.ref('SmartHome/Den').set(val)
-            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    function updateFanUI(index, isOn) {
+        const status = document.getElementById(`fan-status-${index}`);
+        const card = document.getElementById(`card-fan-${index}`);
+
+        if (status) status.textContent = isOn ? 'Đang Bật' : 'Đang Tắt';
+
+        if (isOn) {
+            card.classList.add('active');
+            updateFanAnimation(index);
+        } else {
+            card.classList.remove('active');
+            const icon = document.getElementById(`fan-icon-${index}`);
+            if (icon) {
+                icon.classList.remove('spin-animation');
+                icon.style.animationDuration = '0s';
+            }
+        }
     }
 
-    function toggleFan(isOn) {
-        const val = isOn ? 1 : 0;
-        db.ref('SmartHome/Quat').set(val)
-            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    function updateFanAnimation(index) {
+        if (!state.fans[index]) return;
+
+        const icon = document.getElementById(`fan-icon-${index}`);
+        if (icon) {
+            icon.classList.add('spin-animation');
+            // Speed logic: 100% -> 0.2s, 0% -> 2.2s
+            const animSpeed = 2.2 - (state.fanSpeeds[index] / 100 * 2);
+            icon.style.animationDuration = `${animSpeed}s`;
+        }
     }
 
-    function setFanSpeed(value) {
-        db.ref('SmartHome/TocDoQuat').set(parseInt(value))
+    // --- Actions ---
+    function toggleLight(index, isOn) {
+        const val = isOn ? 1 : 0;
+        db.ref(`SmartHome/Den${index}`).set(val)
+            .catch(err => showToast(`Lỗi Đèn ${index}: ` + err.message, 'error'));
+    }
+
+    function toggleFan(index, isOn) {
+        const val = isOn ? 1 : 0;
+        db.ref(`SmartHome/Quat${index}`).set(val)
+            .catch(err => showToast(`Lỗi Quạt ${index}: ` + err.message, 'error'));
+    }
+
+    function setFanSpeed(index, value) {
+        db.ref(`SmartHome/TocDoQuat${index}`).set(parseInt(value))
             .catch(err => console.error(err));
     }
 
     function turnAllOff() {
         const updates = {};
-        updates['SmartHome/Den'] = 0;
-        updates['SmartHome/Quat'] = 0;
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            updates[`SmartHome/Den${i}`] = 0;
+            updates[`SmartHome/Quat${i}`] = 0;
+        }
 
         db.ref().update(updates)
             .then(() => showToast('Đã tắt tất cả thiết bị'))
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
-    // --- Toast Notification ---
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = 'toast';
-        if (type === 'error') toast.style.borderLeft = '4px solid #ff7675';
-
-        let icon = '<i class="fa-solid fa-info-circle"></i>';
-        if (type === 'success') icon = '<i class="fa-solid fa-check-circle" style="color: #00b894;"></i>';
-        if (type === 'error') icon = '<i class="fa-solid fa-exclamation-circle" style="color: #ff7675;"></i>';
-
-        toast.innerHTML = `${icon} <span>${message}</span>`;
+        // Add icon based on type if needed
+        toast.textContent = message;
         container.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            toast.classList.add('show');
-        });
-
+        requestAnimationFrame(() => toast.classList.add('show'));
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => {
-                if (toast.parentElement) container.removeChild(toast);
-            }, 400);
+            setTimeout(() => { if (toast.parentElement) container.removeChild(toast); }, 400);
         }, 3000);
     }
 
-    // --- Event Listeners ---
+    // --- Event Listeners Binding ---
+    // We bind loop events here
 
-    // Login Handle
+    // Auth
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = loginEmail.value;
-            const password = loginPassword.value;
-            loginError.textContent = ''; // Clear prev error
-
-            auth.signInWithEmailAndPassword(email, password)
-                .catch((error) => {
-                    const errorCode = error.code;
-                    const errorMessage = error.message;
-                    console.error("Login error:", errorCode, errorMessage);
-
-                    if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
-                        loginError.textContent = 'Email hoặc mật khẩu không đúng.';
-                    } else if (errorCode === 'auth/invalid-email') {
-                        loginError.textContent = 'Email không hợp lệ.';
-                    } else {
-                        loginError.textContent = 'Lỗi đăng nhập: ' + errorMessage;
-                    }
-                });
+            auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value)
+                .catch(err => loginError.textContent = "Lỗi: " + err.message);
         });
     }
+    if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
+    if (masterToggle) masterToggle.addEventListener('click', turnAllOff);
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            auth.signOut().catch((error) => {
-                console.error("Logout error", error);
+    // Device Controls (Using Delegation for cleaner code or just Loop)
+    // Since IDs are static, loop is fine.
+
+    // We need to wait for DOM elements to exist? They do.
+    for (let i = 1; i <= DEVICE_COUNT; i++) {
+        // Light Toggle
+        const lToggle = document.getElementById(`light-toggle-${i}`);
+        if (lToggle) {
+            lToggle.addEventListener('change', (e) => toggleLight(i, e.target.checked));
+        }
+
+        // Fan Toggle
+        const fToggle = document.getElementById(`fan-toggle-${i}`);
+        if (fToggle) {
+            fToggle.addEventListener('change', (e) => toggleFan(i, e.target.checked));
+        }
+
+        // Fan Speed
+        const fSpeed = document.getElementById(`fan-speed-${i}`);
+        if (fSpeed) {
+            fSpeed.addEventListener('change', (e) => setFanSpeed(i, e.target.value));
+            // Live Update Label
+            fSpeed.addEventListener('input', (e) => {
+                const lbl = document.getElementById(`fan-speed-value-${i}`);
+                if (lbl) lbl.textContent = `${e.target.value}%`;
             });
-        });
+        }
     }
 
-    // Control Events
-    if (lightToggle) {
-        lightToggle.addEventListener('change', (e) => {
-            toggleLight(e.target.checked);
-        });
-    }
-
-    if (fanToggle) {
-        fanToggle.addEventListener('change', (e) => {
-            toggleFan(e.target.checked);
-        });
-    }
-
-    if (fanSpeed) {
-        fanSpeed.addEventListener('change', (e) => {
-            setFanSpeed(e.target.value);
-        });
-
-        fanSpeed.addEventListener('input', (e) => {
-            fanSpeedValue.textContent = `${e.target.value}%`;
-        });
-    }
-
-    if (masterToggle) {
-        masterToggle.addEventListener('click', turnAllOff);
-    }
-
-    // Run Init
     init();
 });
