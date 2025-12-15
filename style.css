@@ -613,3 +613,52 @@ input:checked+.slider:before {
 .toast.show {
     transform: translateX(-50%) translateY(0);
 }
+
+/* --- Admin View Styles --- */
+#room-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.room-card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 150px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.room-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: #4facfe;
+}
+
+.room-card i {
+    font-size: 2rem;
+    color: #4facfe;
+    margin-bottom: 10px;
+}
+
+.room-card h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #2d3436;
+}
+
+/* Back Button */
+#btn-back-admin {
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+#btn-back-admin:hover {
+    background: #b2bec3;
+    color: #2d3436;
+}

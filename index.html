@@ -14,8 +14,10 @@
 
 <body>
     <!-- Login Section -->
-    <div class="login-wrapper" id="login-section">
-        <div class="login-card">
+    <!-- Auth Section -->
+    <div class="login-wrapper" id="auth-section">
+        <!-- LOGIN CARD -->
+        <div class="login-card" id="login-card">
             <div class="logo-container">
                 <img src="logo.jpg" alt="HCMUTE Logo" class="login-logo">
             </div>
@@ -23,15 +25,48 @@
             <p>Smart Classroom Control HCMUTE</p>
             <form id="login-form">
                 <div class="input-group">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="login-email" placeholder="Email" required>
+                    <i class="fa-solid fa-door-open"></i>
+                    <input type="text" id="login-room" placeholder="Mã Phòng hoặc Email" required>
                 </div>
                 <div class="input-group">
                     <i class="fa-solid fa-lock"></i>
                     <input type="password" id="login-password" placeholder="Mật khẩu" required>
                 </div>
                 <button type="submit" class="btn-login">Đăng Nhập</button>
+                <div style="margin-top: 15px; font-size: 0.9rem;">
+                    <a href="#" id="show-signup" style="color: #4facfe; text-decoration: none;">Chưa có tài khoản? Tạo
+                        mới</a>
+                </div>
                 <p id="login-error" class="login-error"></p>
+            </form>
+        </div>
+
+        <!-- SIGNUP CARD (Hidden by default) -->
+        <div class="login-card" id="signup-card" style="display: none;">
+            <div class="logo-container">
+                <img src="logo.jpg" alt="HCMUTE Logo" class="login-logo" style="width: 80px;">
+            </div>
+            <h2>Tạo Tài Khoản</h2>
+            <p>Nhập mã xác nhận từ Admin</p>
+            <form id="signup-form">
+                <div class="input-group">
+                    <i class="fa-solid fa-door-open"></i>
+                    <input type="text" id="signup-room" placeholder="Mã Phòng hoặc Email" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="signup-password" placeholder="Mật khẩu" required>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="text" id="signup-code" placeholder="Mã Xác Nhận Admin" required>
+                </div>
+
+                <button type="submit" class="btn-login">Đăng Ký</button>
+                <div style="margin-top: 15px; font-size: 0.9rem;">
+                    <a href="#" id="show-login" style="color: #4facfe; text-decoration: none;">Quay lại Đăng Nhập</a>
+                </div>
+                <p id="signup-error" class="login-error"></p>
             </form>
         </div>
     </div>
@@ -45,229 +80,249 @@
             </div>
             <img src="logo.jpg" alt="HCMUTE Logo" class="school-logo">
             <h1>Smart Classroom Control</h1>
-            <p>HCMUTE</p>
+            <p>HCMUTE - <span id="current-room-display">...</span></p>
             <div class="status-badge" id="connection-status">
                 <div class="status-dot"></div>
                 <span>Đã kết nối</span>
             </div>
         </header>
 
-        <!-- Sensor Dashboard -->
-        <div class="sensor-dashboard">
-            <div class="sensor-card">
-                <div class="icon-wrapper temp">
-                    <i class="fa-solid fa-temperature-half"></i>
-                </div>
-                <div class="sensor-info">
-                    <h3>Nhiệt Độ</h3>
-                    <div class="value-wrapper">
-                        <span id="temp-value">--</span>
-                        <span class="unit">°C</span>
-                    </div>
-                </div>
-            </div>
-            <div class="sensor-card">
-                <div class="icon-wrapper humid">
-                    <i class="fa-solid fa-person-walking"></i>
-                </div>
-                <div class="sensor-info">
-                    <h3>Đang Sử Dụng</h3>
-                    <div class="value-wrapper">
-                        <span id="presence-value">--</span>
-                        <span class="unit" style="display:none"></span>
-                    </div>
-                </div>
-            </div>
-            <div class="sensor-card">
-                <div class="icon-wrapper light">
-                    <i class="fa-solid fa-sun"></i>
-                </div>
-                <div class="sensor-info">
-                    <h3>Ánh Sáng</h3>
-                    <div class="value-wrapper">
-                        <span id="light-val-value">--</span>
-                        <span class="unit">Lux</span>
-                    </div>
+        <!-- ADMIN VIEW: Room List -->
+        <div id="admin-view" style="display: none;">
+            <h3 class="device-group-title">Danh Sách Phòng</h3>
+            <div class="sensor-dashboard" id="room-list">
+                <!-- Dynamically populated room cards -->
+                <div class="sensor-card">
+                    <p>Đang tải...</p>
                 </div>
             </div>
         </div>
 
-        <div class="master-control">
-            <button class="btn-master on" id="master-on">
-                <i class="fa-solid fa-power-off"></i> Bật Tất Cả
+        <!-- ROOM VIEW: Sensors & Controls -->
+        <div id="room-view">
+            <!-- Back Button for Admin -->
+            <button id="btn-back-admin" class="btn-master"
+                style="width: 100%; margin-bottom: 20px; display: none; background: #dfe6e9; color: #636e72;">
+                <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
             </button>
-            <button class="btn-master off" id="master-off">
-                <i class="fa-solid fa-power-off"></i> Tắt Tất Cả
-            </button>
+
+            <!-- Sensor Dashboard -->
+            <div class="sensor-dashboard">
+                <div class="sensor-card">
+                    <div class="icon-wrapper temp">
+                        <i class="fa-solid fa-temperature-half"></i>
+                    </div>
+                    <div class="sensor-info">
+                        <h3>Nhiệt Độ</h3>
+                        <div class="value-wrapper">
+                            <span id="temp-value">--</span>
+                            <span class="unit">°C</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="sensor-card">
+                    <div class="icon-wrapper humid">
+                        <i class="fa-solid fa-person-walking"></i>
+                    </div>
+                    <div class="sensor-info">
+                        <h3>Đang Sử Dụng</h3>
+                        <div class="value-wrapper">
+                            <span id="presence-value">--</span>
+                            <span class="unit" style="display:none"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="sensor-card">
+                    <div class="icon-wrapper light">
+                        <i class="fa-solid fa-sun"></i>
+                    </div>
+                    <div class="sensor-info">
+                        <h3>Ánh Sáng</h3>
+                        <div class="value-wrapper">
+                            <span id="light-val-value">--</span>
+                            <span class="unit">Lux</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Master Control -->
+            <div class="master-control">
+                <button class="btn-master on" id="master-on">
+                    <i class="fa-solid fa-power-off"></i> Bật Tất Cả
+                </button>
+                <button class="btn-master off" id="master-off">
+                    <i class="fa-solid fa-power-off"></i> Tắt Tất Cả
+                </button>
+            </div>
+
+            <div class="devices-container">
+                <!-- Light Group -->
+                <div class="device-group-title">Hệ Thống Đèn</div>
+
+                <!-- Light 1 -->
+                <div class="control-card" id="card-light-1">
+                    <div class="card-header">
+                        <div class="device-info">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-lightbulb" id="light-icon-1"></i>
+                            </div>
+                            <div>
+                                <div class="device-name">Đèn 1</div>
+                                <div class="device-status" id="light-status-1">Đang Tắt</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="light-toggle-1">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Light 2 -->
+                <div class="control-card" id="card-light-2">
+                    <div class="card-header">
+                        <div class="device-info">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-lightbulb" id="light-icon-2"></i>
+                            </div>
+                            <div>
+                                <div class="device-name">Đèn 2</div>
+                                <div class="device-status" id="light-status-2">Đang Tắt</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="light-toggle-2">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Light 3 -->
+                <div class="control-card" id="card-light-3">
+                    <div class="card-header">
+                        <div class="device-info">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-lightbulb" id="light-icon-3"></i>
+                            </div>
+                            <div>
+                                <div class="device-name">Đèn 3</div>
+                                <div class="device-status" id="light-status-3">Đang Tắt</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="light-toggle-3">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fan Group -->
+                <div class="device-group-title" style="margin-top: 10px;">Hệ Thống Quạt</div>
+
+                <!-- Fan 1 -->
+                <div class="control-card" id="card-fan-1">
+                    <div class="card-header">
+                        <div class="device-info">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-fan" id="fan-icon-1"></i>
+                            </div>
+                            <div>
+                                <div class="device-name">Quạt 1</div>
+                                <div class="device-status" id="fan-status-1">Đang Tắt</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="fan-toggle-1">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="fan-controls">
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #636e72;">
+                            <span>Tốc độ gió</span>
+                            <span id="fan-speed-value-1">50%</span>
+                        </div>
+                        <div class="range-slider-container">
+                            <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed-1"
+                                data-id="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fan 2 -->
+                <div class="control-card" id="card-fan-2">
+                    <div class="card-header">
+                        <div class="device-info">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-fan" id="fan-icon-2"></i>
+                            </div>
+                            <div>
+                                <div class="device-name">Quạt 2</div>
+                                <div class="device-status" id="fan-status-2">Đang Tắt</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="fan-toggle-2">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="fan-controls">
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #636e72;">
+                            <span>Tốc độ gió</span>
+                            <span id="fan-speed-value-2">50%</span>
+                        </div>
+                        <div class="range-slider-container">
+                            <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed-2"
+                                data-id="2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fan 3 -->
+                <div class="control-card" id="card-fan-3">
+                    <div class="card-header">
+                        <div class="device-info">
+                            <div class="icon-container">
+                                <i class="fa-solid fa-fan" id="fan-icon-3"></i>
+                            </div>
+                            <div>
+                                <div class="device-name">Quạt 3</div>
+                                <div class="device-status" id="fan-status-3">Đang Tắt</div>
+                            </div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="fan-toggle-3">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="fan-controls">
+                        <div
+                            style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #636e72;">
+                            <span>Tốc độ gió</span>
+                            <span id="fan-speed-value-3">50%</span>
+                        </div>
+                        <div class="range-slider-container">
+                            <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed-3"
+                                data-id="3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="devices-container">
-            <!-- Light Group -->
-            <div class="device-group-title">Hệ Thống Đèn</div>
+        <!-- Toast Notification Container -->
+        <div id="toast-container"></div>
 
-            <!-- Light 1 -->
-            <div class="control-card" id="card-light-1">
-                <div class="card-header">
-                    <div class="device-info">
-                        <div class="icon-container">
-                            <i class="fa-solid fa-lightbulb" id="light-icon-1"></i>
-                        </div>
-                        <div>
-                            <div class="device-name">Đèn 1</div>
-                            <div class="device-status" id="light-status-1">Đang Tắt</div>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="light-toggle-1">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
+        <!-- Firebase SDKs -->
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
-            <!-- Light 2 -->
-            <div class="control-card" id="card-light-2">
-                <div class="card-header">
-                    <div class="device-info">
-                        <div class="icon-container">
-                            <i class="fa-solid fa-lightbulb" id="light-icon-2"></i>
-                        </div>
-                        <div>
-                            <div class="device-name">Đèn 2</div>
-                            <div class="device-status" id="light-status-2">Đang Tắt</div>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="light-toggle-2">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Light 3 -->
-            <div class="control-card" id="card-light-3">
-                <div class="card-header">
-                    <div class="device-info">
-                        <div class="icon-container">
-                            <i class="fa-solid fa-lightbulb" id="light-icon-3"></i>
-                        </div>
-                        <div>
-                            <div class="device-name">Đèn 3</div>
-                            <div class="device-status" id="light-status-3">Đang Tắt</div>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="light-toggle-3">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Fan Group -->
-            <div class="device-group-title" style="margin-top: 10px;">Hệ Thống Quạt</div>
-
-            <!-- Fan 1 -->
-            <div class="control-card" id="card-fan-1">
-                <div class="card-header">
-                    <div class="device-info">
-                        <div class="icon-container">
-                            <i class="fa-solid fa-fan" id="fan-icon-1"></i>
-                        </div>
-                        <div>
-                            <div class="device-name">Quạt 1</div>
-                            <div class="device-status" id="fan-status-1">Đang Tắt</div>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="fan-toggle-1">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="fan-controls">
-                    <div
-                        style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #636e72;">
-                        <span>Tốc độ gió</span>
-                        <span id="fan-speed-value-1">50%</span>
-                    </div>
-                    <div class="range-slider-container">
-                        <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed-1"
-                            data-id="1">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fan 2 -->
-            <div class="control-card" id="card-fan-2">
-                <div class="card-header">
-                    <div class="device-info">
-                        <div class="icon-container">
-                            <i class="fa-solid fa-fan" id="fan-icon-2"></i>
-                        </div>
-                        <div>
-                            <div class="device-name">Quạt 2</div>
-                            <div class="device-status" id="fan-status-2">Đang Tắt</div>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="fan-toggle-2">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="fan-controls">
-                    <div
-                        style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #636e72;">
-                        <span>Tốc độ gió</span>
-                        <span id="fan-speed-value-2">50%</span>
-                    </div>
-                    <div class="range-slider-container">
-                        <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed-2"
-                            data-id="2">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fan 3 -->
-            <div class="control-card" id="card-fan-3">
-                <div class="card-header">
-                    <div class="device-info">
-                        <div class="icon-container">
-                            <i class="fa-solid fa-fan" id="fan-icon-3"></i>
-                        </div>
-                        <div>
-                            <div class="device-name">Quạt 3</div>
-                            <div class="device-status" id="fan-status-3">Đang Tắt</div>
-                        </div>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="fan-toggle-3">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="fan-controls">
-                    <div
-                        style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; color: #636e72;">
-                        <span>Tốc độ gió</span>
-                        <span id="fan-speed-value-3">50%</span>
-                    </div>
-                    <div class="range-slider-container">
-                        <input type="range" min="1" max="100" value="50" class="range-slider" id="fan-speed-3"
-                            data-id="3">
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Toast Notification Container -->
-    <div id="toast-container"></div>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
-    <script src="firebase-config.js"></script>
-    <script src="script.js"></script>
+        <script src="firebase-config.js"></script>
+        <script src="script.js"></script>
 </body>
 
 </html>
