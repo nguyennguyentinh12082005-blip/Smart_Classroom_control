@@ -38,20 +38,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Initialization ---
     function init() {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                console.log("Logged in:", user.email);
-                if (loginSection) loginSection.style.display = 'none';
-                if (mainContainer) mainContainer.style.display = 'block';
+        // Enforce Session Persistence -> Clears auth on tab close
+        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+            .then(() => {
+                auth.onAuthStateChanged((user) => {
+                    if (user) {
+                        console.log("Logged in:", user.email);
+                        if (loginSection) loginSection.style.display = 'none';
+                        if (mainContainer) mainContainer.style.display = 'block';
 
-                setupConnectionListener();
-                setupSensorListeners();
-                setupDeviceListeners();
-            } else {
-                if (loginSection) loginSection.style.display = 'flex';
-                if (mainContainer) mainContainer.style.display = 'none';
-            }
-        });
+                        setupConnectionListener();
+                        setupSensorListeners();
+                        setupDeviceListeners();
+                    } else {
+                        if (loginSection) loginSection.style.display = 'flex';
+                        if (mainContainer) mainContainer.style.display = 'none';
+                    }
+                });
+            })
+            .catch(err => console.error("Persistence Error:", err));
     }
 
     function setupConnectionListener() {
@@ -241,12 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-
-            // Set persistence to SESSION so closing tab clears auth
-            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
-                .then(() => {
-                    return auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value);
-                })
+            auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value)
                 .catch(err => loginError.textContent = "Lỗi: " + err.message);
         });
     }
