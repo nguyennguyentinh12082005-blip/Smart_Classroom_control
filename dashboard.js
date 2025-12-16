@@ -286,8 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const isAuto = snap.val() === true;
             if (autoModeToggle) {
                 autoModeToggle.checked = isAuto;
-                // Only Admin can toggle Auto Mode
-                autoModeToggle.disabled = (currentUserRole !== 'admin');
+                // Toggle is now unlocked for everyone (but starts ON)
+                autoModeToggle.disabled = false;
             }
 
             // Disable/Enable manual controls
