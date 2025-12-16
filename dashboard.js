@@ -102,14 +102,60 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.keys(rooms).forEach(roomId => {
                 const card = document.createElement('div');
                 card.className = 'room-card';
+                card.id = `room-card-${roomId}`;
+
+                // Initial Structure
                 card.innerHTML = `
-                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <div style="position: relative; display: inline-block;">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                        <span class="presence-dot" id="presence-dot-${roomId}" 
+                              style="position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; 
+                                     border-radius: 50%; background: #bdc3c7; border: 2px solid #fff; 
+                                     box-shadow: 0 0 5px rgba(0,0,0,0.1);"></span>
+                    </div>
                     <h3>${roomId}</h3>
+                    <p id="presence-text-${roomId}" style="font-size: 0.8rem; color: #95a5a6; margin-top: 5px;">Trống</p>
                 `;
+
                 card.addEventListener('click', () => {
                     loadRoomView(roomId);
                 });
                 roomListContainer.appendChild(card);
+
+                // Listen for Presence
+                const presenceRef = db.ref(`Rooms/${roomId}/PhatHienNguoi`);
+                const presenceCb = (snap) => {
+                    const val = snap.val();
+                    const isPresent = val == 1 || val === true || val === '1' || val === 'motion';
+
+                    const dot = document.getElementById(`presence-dot-${roomId}`);
+                    const text = document.getElementById(`presence-text-${roomId}`);
+
+                    if (dot && text) {
+                        if (isPresent) {
+                            dot.style.background = '#00b894';
+                            dot.style.boxShadow = '0 0 8px #00b894';
+                            text.textContent = "Đang sử dụng";
+                            text.style.color = '#00b894';
+                            text.style.fontWeight = "600";
+                        } else {
+                            dot.style.background = '#bdc3c7';
+                            dot.style.boxShadow = 'none';
+                            text.textContent = "Trống";
+                            text.style.color = '#95a5a6';
+                            text.style.fontWeight = "400";
+                        }
+                    }
+                };
+
+                presenceRef.on('value', presenceCb);
+                // Note: We should track these listeners to detach them later, 
+                // but since this is inside the room list which regenerates, 
+                // we might accumulate listeners if we are not careful. 
+                // Ideally, 'activeListeners' clears everything on detachListeners(). 
+                // But detachListeners() only clears what is IN activeListeners.
+                // We must push these new listeners to activeListeners.
+                activeListeners.push({ ref: presenceRef, event: 'value', callback: presenceCb });
             });
         };
         roomsRef.on('value', roomsCb);
