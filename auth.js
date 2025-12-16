@@ -109,9 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 })
                 .then(() => {
+
                     const roomId = input.toUpperCase();
                     if (roomId !== 'ADMIN' && email !== SUPER_ADMIN_EMAIL && !email.includes('gmail.com')) {
-                        db.ref('Rooms/' + roomId).update({ created: true });
+                        // Initialize with default empty data (0) for visualization
+                        const initData = {
+                            created: true,
+                            NhietDo: 0,
+                            DoAm: 0,
+                            AnhSang: 0,
+                            PhatHienNguoi: 0,
+                            Den1: 0, Den2: 0, Den3: 0,
+                            Quat1: 0, Quat2: 0, Quat3: 0,
+                            TocDoQuat1: 0, TocDoQuat2: 0, TocDoQuat3: 0,
+                            CheDoTuDong: true // Default Auto Mode ON
+                        };
+                        db.ref('Rooms/' + roomId).update(initData);
                     }
                     alert("Tạo tài khoản thành công! Đang chuyển hướng...");
                     // Redirect handled by onAuthStateChanged
