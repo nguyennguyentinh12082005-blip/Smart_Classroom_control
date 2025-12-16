@@ -108,8 +108,7 @@ header {
     margin-bottom: 12px;
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
     transition: transform 0.3s ease;
-    mix-blend-mode: multiply;
-    /* Removes white background */
+
 }
 
 .school-logo:hover {
@@ -493,7 +492,7 @@ input:checked+.slider:before {
 .login-logo {
     width: 100px;
     transition: transform 0.5s;
-    mix-blend-mode: multiply;
+
 }
 
 .login-logo:hover {
