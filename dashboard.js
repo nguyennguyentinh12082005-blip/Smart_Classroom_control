@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Controls
     const masterOff = document.getElementById('master-off');
     const masterOn = document.getElementById('master-on');
+
+    const autoModeToggle = document.getElementById('auto-mode-toggle');
     const connectionStatus = document.getElementById('connection-status');
 
     // Sensors
@@ -270,8 +272,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             speedRef.on('value', speedCb);
+            speedRef.on('value', speedCb);
             activeListeners.push({ ref: speedRef, event: 'value', callback: speedCb });
         }
+
+        // 4. Auto Mode
+        const autoModeRef = db.ref(`${basePath}/CheDoTuDong`);
+        const autoModeCb = (snap) => {
+            const isAuto = snap.val() === true;
+            if (autoModeToggle) autoModeToggle.checked = isAuto;
+
+            // Disable/Enable manual controls
+            for (let i = 1; i <= DEVICE_COUNT; i++) {
+                const lToggle = document.getElementById(`light-toggle-${i}`);
+                const fToggle = document.getElementById(`fan-toggle-${i}`);
+                if (lToggle) lToggle.disabled = isAuto;
+                if (fToggle) fToggle.disabled = isAuto;
+            }
+
+            if (masterOn) masterOn.disabled = isAuto;
+            if (masterOff) masterOff.disabled = isAuto;
+        };
+        autoModeRef.on('value', autoModeCb);
+        activeListeners.push({ ref: autoModeRef, event: 'value', callback: autoModeCb });
     }
 
     // --- Actions ---
@@ -386,6 +409,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (masterOff) masterOff.addEventListener('click', turnAllOff);
     if (masterOn) masterOn.addEventListener('click', turnAllOn);
+
+    if (autoModeToggle) {
+        autoModeToggle.addEventListener('change', (e) => {
+            if (!currentRoomId) return;
+            const isAuto = e.target.checked;
+            db.ref(`Rooms/${currentRoomId}/CheDoTuDong`).set(isAuto)
+                .catch(err => showToast(`Lỗi: ` + err.message, 'error'));
+        });
+    }
 
     for (let i = 1; i <= DEVICE_COUNT; i++) {
         const lToggle = document.getElementById(`light-toggle-${i}`);
