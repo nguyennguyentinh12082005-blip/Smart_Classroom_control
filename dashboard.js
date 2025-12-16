@@ -7,32 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
 
     // --- DOM Elements ---
-    const authSection = document.getElementById('auth-section');
-    const loginCard = document.getElementById('login-card');
-    const signupCard = document.getElementById('signup-card');
     const mainContainer = document.getElementById('main-container');
-
     const adminView = document.getElementById('admin-view');
     const roomView = document.getElementById('room-view');
     const roomListContainer = document.getElementById('room-list');
     const btnBackAdmin = document.getElementById('btn-back-admin');
     const currentRoomDisplay = document.getElementById('current-room-display');
-
-    // Forms
-    const loginForm = document.getElementById('login-form');
-    const loginRoomInput = document.getElementById('login-room');
-    const loginPassword = document.getElementById('login-password');
-    const loginError = document.getElementById('login-error');
-
-    const signupForm = document.getElementById('signup-form');
-    const signupRoomInput = document.getElementById('signup-room');
-    const signupPassword = document.getElementById('signup-password');
-    const signupCodeInput = document.getElementById('signup-code');
-    const signupError = document.getElementById('signup-error');
-
-    // Toggles
-    const showSignupLink = document.getElementById('show-signup');
-    const showLoginLink = document.getElementById('show-login');
     const logoutBtn = document.getElementById('logout-btn');
 
     // Controls
@@ -47,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Config
     const DEVICE_COUNT = 3;
-    const ADMIN_CODE = "123456"; // System verification code
     const SUPER_ADMIN_EMAIL = "nguyennguyentinh12082005@gmail.com";
 
     // State
@@ -58,42 +37,21 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let currentUserRole = null;
     let currentRoomId = null;
-    let activeListeners = []; // Array of { ref: db.ref, event: 'value', callback: fn }
+    let activeListeners = [];
 
-    // --- Initialization ---
-    // ... (init function remains same, managed by replace logic) -> Wait, I am replacing a block, need to be careful.
-    // I will replace the submit handlers specifically or the whole block if needed.
-    // Let's replace from Config down to Signup Handler to be safe.
+    // --- Auth Check ---
+    auth.onAuthStateChanged((user) => {
+        if (!user) {
+            console.log("No user logged in, redirecting to login...");
+            window.location.href = 'index.html';
+        } else {
+            console.log("Logged in:", user.email);
+            handleUserSession(user);
+        }
+    });
 
-    // Actually, let's just replace the submit handlers and the Config constant area.
-
-    // --- Initialization ---
-    function init() {
-        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
-            .then(() => {
-                auth.onAuthStateChanged((user) => {
-                    if (user) {
-                        console.log("Logged in:", user.email);
-                        handleUserSession(user);
-                    } else {
-                        showLoginView();
-                    }
-                });
-            })
-            .catch(err => console.error("Persistence Error:", err));
-    }
-
-    // --- Auth Logic ---
-    function showLoginView() {
-        authSection.style.display = 'flex';
-        mainContainer.style.display = 'none';
-        loginCard.style.display = 'block';
-        signupCard.style.display = 'none';
-        resetState();
-    }
-
+    // --- Core Logic ---
     function handleUserSession(user) {
-        // Fetch user profile to get Role and RoomID
         db.ref('users/' + user.uid).once('value')
             .then(snapshot => {
                 const data = snapshot.val();
@@ -101,13 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentUserRole = data.role;
                     const homeRoom = data.roomId;
 
-                    // Special Check for Super Admin
                     if (user.email === SUPER_ADMIN_EMAIL) {
                         currentUserRole = 'admin';
                     }
-
-                    authSection.style.display = 'none';
-                    mainContainer.style.display = 'block';
 
                     if (currentUserRole === 'admin') {
                         loadAdminDashboard();
@@ -115,107 +69,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         loadRoomView(homeRoom);
                     }
                 } else {
-                    // Fallback: If no profile but is Super Admin, create one or allow access
                     if (user.email === SUPER_ADMIN_EMAIL) {
                         currentUserRole = 'admin';
-                        authSection.style.display = 'none';
-                        mainContainer.style.display = 'block';
                         loadAdminDashboard();
                         return;
                     }
-
                     console.error("No user profile found");
-                    auth.signOut();
+                    auth.signOut(); // Will trigger redirect
                 }
             });
     }
 
-    function resetState() {
-        currentUserRole = null;
-        currentRoomId = null;
-        detachListeners();
-    }
-
-    // --- Signup / Login Handlers ---
-    if (showSignupLink) {
-        showSignupLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            loginCard.style.display = 'none';
-            signupCard.style.display = 'block';
-        });
-    }
-
-    if (showLoginLink) {
-        showLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            signupCard.style.display = 'none';
-            loginCard.style.display = 'block';
-        });
-    }
-
-    function formatEmail(input) {
-        if (input.includes('@')) return input;
-        return input.trim() + "@smartclass.local";
-    }
-
-    if (loginForm) {
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const input = loginRoomInput.value.trim();
-            const email = formatEmail(input);
-            auth.signInWithEmailAndPassword(email, loginPassword.value)
-                .catch(err => loginError.textContent = "Lỗi: " + err.message);
-        });
-    }
-
-    if (signupForm) {
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const input = signupRoomInput.value.trim();
-            const email = formatEmail(input);
-            const pass = signupPassword.value;
-            const code = signupCodeInput.value.trim();
-
-            if (code !== ADMIN_CODE) {
-                signupError.textContent = "Mã xác nhận không đúng!";
-                return;
-            }
-
-            auth.createUserWithEmailAndPassword(email, pass)
-                .then((cred) => {
-                    // Create User Profile
-                    let role = 'user';
-                    let roomId = input.toUpperCase();
-
-                    // Check for Admin conditions
-                    if (email === SUPER_ADMIN_EMAIL || roomId === 'ADMIN') {
-                        role = 'admin';
-                        roomId = 'ADMIN_PANEL';
-                    }
-
-                    return db.ref('users/' + cred.user.uid).set({
-                        email: email,
-                        roomId: roomId,
-                        role: role,
-                        createdAt: firebase.database.ServerValue.TIMESTAMP
-                    });
-                })
-                .then(() => {
-                    // Init Room Data if not exists (optional, but good for safety)
-                    const roomId = input.toUpperCase();
-                    if (roomId !== 'ADMIN' && email !== SUPER_ADMIN_EMAIL && !email.includes('gmail.com')) {
-                        db.ref('Rooms/' + roomId).update({ created: true });
-                    }
-                    alert("Tạo tài khoản thành công!");
-                })
-                .catch(err => signupError.textContent = "Lỗi: " + err.message);
-        });
-    }
-
-    if (logoutBtn) logoutBtn.addEventListener('click', () => auth.signOut());
-
-
-    // --- Admin Dashboard logic ---
     function loadAdminDashboard() {
         adminView.style.display = 'block';
         roomView.style.display = 'none';
@@ -223,10 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRoomDisplay.textContent = "Admin Control Panel";
 
         roomListContainer.innerHTML = '<p>Đang tải danh sách phòng...</p>';
+        detachListeners();
 
-        detachListeners(); // Clear any device listeners
-
-        // Listen to Rooms node
         const roomsRef = db.ref('Rooms');
         const roomsCb = (snapshot) => {
             const rooms = snapshot.val();
@@ -254,15 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
         activeListeners.push({ ref: roomsRef, event: 'value', callback: roomsCb });
     }
 
-    if (btnBackAdmin) {
-        btnBackAdmin.addEventListener('click', () => {
-            if (currentUserRole === 'admin') {
-                loadAdminDashboard();
-            }
-        });
-    }
-
-    // --- Room View Logic ---
     function loadRoomView(roomId) {
         currentRoomId = roomId;
 
@@ -286,10 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupDeviceListeners(roomId) {
         detachListeners();
+        const basePath = `Rooms/${roomId}`;
 
-        const basePath = `Rooms/${roomId}`; // NEW SCHEMA
-
-        // 1. Connection (Reuse existing logic but ensure only one listener)
+        // 1. Connection
         const connectedRef = db.ref(".info/connected");
         const connectedCb = (snap) => {
             if (snap.val() === true) {
@@ -306,7 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
         activeListeners.push({ ref: connectedRef, event: "value", callback: connectedCb });
 
         // 2. Sensors
-        // Expecting Rooms/RID/NhietDo, etc.
         const sensorMap = {
             'NhietDo': tempValue,
             'PhatHienNguoi': presenceValue,
@@ -325,7 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     presenceValue.textContent = hasMotion ? 'Có' : 'Không';
                     presenceValue.style.color = hasMotion ? '#00b894' : '#fab1a0';
                 } else {
-                    tempValue.textContent = val !== null ? val : '--'; // Wait, hardcoded tempValue for loop? No, handled by map.
                     if (key === 'NhietDo') tempValue.textContent = val !== null ? val : '--';
                     if (key === 'AnhSang') lightValValue.textContent = val !== null ? val : '--';
                 }
@@ -334,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeListeners.push({ ref: ref, event: 'value', callback: cb });
         });
 
-        // 3. Devices (Loops)
+        // 3. Devices
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             // Lights
             const lightRef = db.ref(`${basePath}/Den${i}`);
@@ -423,28 +273,30 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
-    // UI Updates (Same as before)
+    // UI Updates
     function updateLightUI(index, isOn) {
         const statusEl = document.getElementById(`light-status-${index}`);
         const card = document.getElementById(`card-light-${index}`);
         if (statusEl) statusEl.textContent = isOn ? 'Đang Bật' : 'Đang Tắt';
-        if (isOn) card.classList.add('active');
-        else card.classList.remove('active');
+        if (isOn && card) card.classList.add('active');
+        else if (card) card.classList.remove('active');
     }
 
     function updateFanUI(index, isOn) {
         const statusEl = document.getElementById(`fan-status-${index}`);
         const card = document.getElementById(`card-fan-${index}`);
         if (statusEl) statusEl.textContent = isOn ? 'Đang Bật' : 'Đang Tắt';
-        if (isOn) {
-            card.classList.add('active');
-            updateFanAnimation(index);
-        } else {
-            card.classList.remove('active');
-            const icon = document.getElementById(`fan-icon-${index}`);
-            if (icon) {
-                icon.classList.remove('spin-animation');
-                icon.style.animationDuration = '0s';
+        if (card) {
+            if (isOn) {
+                card.classList.add('active');
+                updateFanAnimation(index);
+            } else {
+                card.classList.remove('active');
+                const icon = document.getElementById(`fan-icon-${index}`);
+                if (icon) {
+                    icon.classList.remove('spin-animation');
+                    icon.style.animationDuration = '0s';
+                }
             }
         }
     }
@@ -461,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
+        if (!container) return;
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.textContent = message;
@@ -472,11 +325,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    // --- Binding Static Listeners ---
+    // --- Inputs ---
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+        auth.signOut().then(() => {
+            window.location.href = 'index.html';
+        });
+    });
+
+    if (btnBackAdmin) {
+        btnBackAdmin.addEventListener('click', () => {
+            if (currentUserRole === 'admin') loadAdminDashboard();
+        });
+    }
+
     if (masterOff) masterOff.addEventListener('click', turnAllOff);
     if (masterOn) masterOn.addEventListener('click', turnAllOn);
 
-    // Device Controls Delegation
     for (let i = 1; i <= DEVICE_COUNT; i++) {
         const lToggle = document.getElementById(`light-toggle-${i}`);
         if (lToggle) lToggle.addEventListener('change', (e) => toggleLight(i, e.target.checked));
@@ -493,7 +357,4 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
-
-    // Start
-    init();
 });
