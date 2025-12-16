@@ -12,7 +12,7 @@
 
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Outfit', sans-serif;
             background: #f0f2f5;
             display: flex;
             justify-content: center;
@@ -100,24 +100,20 @@
 
         <div class="form-group">
             <label>🔥 Nhiệt Độ (°C)</label>
-            <input type="number" id="temp" value="28">
+            <input type="number" id="temp" value="24">
         </div>
 
-        <div class="form-group">
-            <label>💧 Độ Ẩm (%)</label>
-            <input type="number" id="humidity" value="65">
-        </div>
 
         <div class="form-group">
             <label>💡 Ánh Sáng (Lux)</label>
-            <input type="number" id="light" value="300">
+            <input type="number" id="light" value="2549">
         </div>
 
         <div class="form-group">
             <label>🚶 Phát Hiện Người</label>
             <select id="presence">
                 <option value="0">Không có người (0)</option>
-                <option value="1">Có người (1)</option>
+                <option value="1" selected>Có người (1)</option>
             </select>
         </div>
 
@@ -144,7 +140,6 @@
 
             const data = {
                 NhietDo: parseFloat(document.getElementById('temp').value),
-                DoAm: parseFloat(document.getElementById('humidity').value),
                 AnhSang: parseFloat(document.getElementById('light').value),
                 PhatHienNguoi: parseInt(document.getElementById('presence').value)
             };
