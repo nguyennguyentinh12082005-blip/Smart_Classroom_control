@@ -308,26 +308,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Actions ---
     function toggleLight(index, isOn) {
         if (!currentRoomId) return;
+
+        // Optimistic UI Update
+        updateLightUI(index, isOn);
+        state.lights[index] = isOn; // Update local state immediately
+
         const val = isOn ? 1 : 0;
         db.ref(`Rooms/${currentRoomId}/Den${index}`).set(val)
-            .catch(err => showToast(`Lỗi: ` + err.message, 'error'));
+            .catch(err => {
+                showToast(`Lỗi: ` + err.message, 'error');
+                // Revert on error
+                updateLightUI(index, !isOn);
+                state.lights[index] = !isOn;
+                const toggle = document.getElementById(`light-toggle-${index}`);
+                if (toggle) toggle.checked = !isOn;
+            });
     }
 
     function toggleFan(index, isOn) {
         if (!currentRoomId) return;
+
+        // Optimistic UI Update
+        updateFanUI(index, isOn);
+        state.fans[index] = isOn; // Update local state immediately
+
         const val = isOn ? 1 : 0;
         db.ref(`Rooms/${currentRoomId}/Quat${index}`).set(val)
-            .catch(err => showToast(`Lỗi: ` + err.message, 'error'));
+            .catch(err => {
+                showToast(`Lỗi: ` + err.message, 'error');
+                // Revert on error
+                updateFanUI(index, !isOn);
+                state.fans[index] = !isOn;
+                const toggle = document.getElementById(`fan-toggle-${index}`);
+                if (toggle) toggle.checked = !isOn;
+            });
     }
 
     function setFanSpeed(index, value) {
         if (!currentRoomId) return;
+        // Speed slider is already somewhat optimistic via 'input' listener updating label
+        // But we can update state immediately too
+        state.fanSpeeds[index] = parseInt(value);
+        updateFanAnimation(index);
+
         db.ref(`Rooms/${currentRoomId}/TocDoQuat${index}`).set(parseInt(value))
             .catch(err => console.error(err));
     }
 
     function turnAllOff() {
         if (!currentRoomId) return;
+
+        // Optimistic Update
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            updateLightUI(i, false);
+            updateFanUI(i, false);
+            state.lights[i] = false;
+            state.fans[i] = false;
+            const lToggle = document.getElementById(`light-toggle-${i}`);
+            const fToggle = document.getElementById(`fan-toggle-${i}`);
+            if (lToggle) lToggle.checked = false;
+            if (fToggle) fToggle.checked = false;
+        }
+
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             updates[`Rooms/${currentRoomId}/Den${i}`] = 0;
@@ -340,6 +382,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function turnAllOn() {
         if (!currentRoomId) return;
+
+        // Optimistic Update
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            updateLightUI(i, true);
+            updateFanUI(i, true);
+            state.lights[i] = true;
+            state.fans[i] = true;
+            const lToggle = document.getElementById(`light-toggle-${i}`);
+            const fToggle = document.getElementById(`fan-toggle-${i}`);
+            if (lToggle) lToggle.checked = true;
+            if (fToggle) fToggle.checked = true;
+        }
+
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             updates[`Rooms/${currentRoomId}/Den${i}`] = 1;
