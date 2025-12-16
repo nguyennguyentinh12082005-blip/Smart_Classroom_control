@@ -278,9 +278,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 4. Auto Mode
         const autoModeRef = db.ref(`${basePath}/CheDoTuDong`);
+
+        // FORCE ENABLE AUTO MODE ON LOAD
+        autoModeRef.set(true).catch(e => console.error("Auto Force Error", e));
+
         const autoModeCb = (snap) => {
             const isAuto = snap.val() === true;
-            if (autoModeToggle) autoModeToggle.checked = isAuto;
+            if (autoModeToggle) {
+                autoModeToggle.checked = isAuto;
+                // Only Admin can toggle Auto Mode
+                autoModeToggle.disabled = (currentUserRole !== 'admin');
+            }
 
             // Disable/Enable manual controls
             for (let i = 1; i <= DEVICE_COUNT; i++) {
