@@ -269,7 +269,7 @@ header p {
     border: 1px solid #fff;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     overflow: hidden;
     position: relative;
 }
@@ -349,7 +349,7 @@ header p {
     bottom: 0;
     background-color: #dfe6e9;
     border-radius: 34px;
-    transition: 0.4s;
+    transition: 0.2s;
     cursor: pointer;
 }
 
@@ -362,7 +362,7 @@ header p {
     bottom: 4px;
     background-color: white;
     border-radius: 50%;
-    transition: 0.4s;
+    transition: 0.2s;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
