@@ -734,19 +734,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Navigation
+    console.log('Setting up navigation listeners...');
+    console.log('navDashboard:', navDashboard);
+    console.log('navRooms:', navRooms);
+    console.log('navStatistics:', navStatistics);
+
     if (navDashboard) navDashboard.addEventListener('click', (e) => {
         e.preventDefault();
+        console.log('Dashboard clicked');
         showView('dashboard');
         loadAdminData();
     });
 
     if (navRooms) navRooms.addEventListener('click', (e) => {
         e.preventDefault();
+        console.log('Rooms clicked');
         showView('rooms');
     });
 
     if (navStatistics) navStatistics.addEventListener('click', (e) => {
         e.preventDefault();
+        console.log('Statistics clicked');
         showView('statistics');
     });
 
