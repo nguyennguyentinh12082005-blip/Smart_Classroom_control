@@ -9,6 +9,8 @@
     <link rel="icon" href="logo_hcmute.png">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="css/all.min.css">
+    <!-- Chart.js for Statistics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -25,7 +27,7 @@
             </div>
 
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active">
+                <a href="#" class="nav-item active" id="nav-dashboard">
                     <i class="fa-solid fa-house"></i>
                     <span>Dashboard</span>
                 </a>
@@ -33,11 +35,11 @@
                     <i class="fa-solid fa-door-open"></i>
                     <span>Phòng học</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" id="nav-statistics">
                     <i class="fa-solid fa-chart-line"></i>
                     <span>Thống kê</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" id="nav-settings">
                     <i class="fa-solid fa-gear"></i>
                     <span>Cài đặt</span>
                 </a>
@@ -60,7 +62,7 @@
             <!-- HEADER -->
             <header class="main-header">
                 <div class="header-left">
-                    <h1 class="page-title">Dashboard</h1>
+                    <h1 class="page-title" id="page-title">Dashboard</h1>
                     <p class="page-subtitle">Trường Đại học Công nghệ Kỹ thuật TP. Hồ Chí Minh</p>
                 </div>
                 <div class="header-right">
@@ -73,15 +75,66 @@
                         <span>Đã kết nối</span>
                     </div>
                     <div class="current-room-badge">
-                        <i class="fa-solid fa-location-dot"></i>
+                        <i class="fa-solid fa-user"></i>
                         <span id="current-room-display">...</span>
                     </div>
                 </div>
             </header>
 
-            <!-- ADMIN VIEW: Room List -->
-            <div id="admin-view" style="display: none;">
-                <h3 class="section-title">Danh Sách Phòng</h3>
+            <!-- ==================== VIEW 1: ADMIN DASHBOARD ==================== -->
+            <div id="admin-dashboard-view" style="display: none;">
+                <!-- Overview Stats Cards -->
+                <section class="overview-stats">
+                    <div class="overview-card">
+                        <div class="overview-icon rooms">
+                            <i class="fa-solid fa-door-open"></i>
+                        </div>
+                        <div class="overview-info">
+                            <span class="overview-value" id="total-rooms">0</span>
+                            <span class="overview-label">Tổng Phòng</span>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-icon active">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="overview-info">
+                            <span class="overview-value" id="active-rooms">0</span>
+                            <span class="overview-label">Đang Sử Dụng</span>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-icon temp">
+                            <i class="fa-solid fa-temperature-half"></i>
+                        </div>
+                        <div class="overview-info">
+                            <span class="overview-value" id="avg-temp">--</span>
+                            <span class="overview-label">Nhiệt Độ TB (°C)</span>
+                        </div>
+                    </div>
+                    <div class="overview-card">
+                        <div class="overview-icon humidity">
+                            <i class="fa-solid fa-droplet"></i>
+                        </div>
+                        <div class="overview-info">
+                            <span class="overview-value" id="avg-humidity">--</span>
+                            <span class="overview-label">Độ Ẩm TB (%)</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quick Room Status -->
+                <section class="quick-status">
+                    <h3 class="section-title">Trạng Thái Phòng Học</h3>
+                    <div class="room-status-grid" id="room-status-grid">
+                        <p style="color: #7F8C8D;">Đang tải...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ==================== VIEW 2: ROOMS LIST ==================== -->
+            <div id="rooms-view" style="display: none;">
+                <h3 class="section-title">Danh Sách Phòng Học</h3>
                 <div class="room-grid" id="room-list">
                     <div class="room-card-skeleton">
                         <p>Đang tải...</p>
@@ -89,10 +142,10 @@
                 </div>
             </div>
 
-            <!-- ROOM VIEW: Sensors & Controls -->
-            <div id="room-view">
-                <!-- Back Button for Admin -->
-                <button id="btn-back-admin" class="btn-back" style="display: none;">
+            <!-- ==================== VIEW 3: ROOM CONTROL ==================== -->
+            <div id="room-control-view" style="display: none;">
+                <!-- Back Button -->
+                <button id="btn-back-rooms" class="btn-back">
                     <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
                 </button>
 
@@ -336,6 +389,43 @@
                         </div>
                     </div>
                 </section>
+            </div>
+
+            <!-- ==================== VIEW 4: STATISTICS ==================== -->
+            <div id="statistics-view" style="display: none;">
+                <div class="stats-charts-grid">
+                    <!-- Temperature Chart -->
+                    <div class="chart-card">
+                        <h3 class="chart-title"><i class="fa-solid fa-temperature-half"></i> Nhiệt Độ Theo Phòng</h3>
+                        <div class="chart-container">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Humidity Chart -->
+                    <div class="chart-card">
+                        <h3 class="chart-title"><i class="fa-solid fa-droplet"></i> Độ Ẩm Theo Phòng</h3>
+                        <div class="chart-container">
+                            <canvas id="humidityChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Light Chart -->
+                    <div class="chart-card">
+                        <h3 class="chart-title"><i class="fa-solid fa-sun"></i> Ánh Sáng Theo Phòng (Lux)</h3>
+                        <div class="chart-container">
+                            <canvas id="lightChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Usage Chart -->
+                    <div class="chart-card">
+                        <h3 class="chart-title"><i class="fa-solid fa-clock"></i> Tình Trạng Sử Dụng Phòng</h3>
+                        <div class="chart-container">
+                            <canvas id="usageChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Toast Notification Container -->

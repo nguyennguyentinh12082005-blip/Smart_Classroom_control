@@ -7,20 +7,40 @@ document.addEventListener('DOMContentLoaded', () => {
     const auth = firebase.auth();
 
     // --- DOM Elements ---
-    const mainContainer = document.getElementById('main-container');
-    const adminView = document.getElementById('admin-view');
-    const roomView = document.getElementById('room-view');
-    const roomListContainer = document.getElementById('room-list');
-    const btnBackAdmin = document.getElementById('btn-back-admin');
+    // Views
+    const adminDashboardView = document.getElementById('admin-dashboard-view');
+    const roomsView = document.getElementById('rooms-view');
+    const roomControlView = document.getElementById('room-control-view');
+    const statisticsView = document.getElementById('statistics-view');
+
+    // Navigation
+    const navDashboard = document.getElementById('nav-dashboard');
+    const navRooms = document.getElementById('nav-rooms');
+    const navStatistics = document.getElementById('nav-statistics');
+    const navSettings = document.getElementById('nav-settings');
+    const allNavItems = document.querySelectorAll('.nav-item:not(.logout)');
+
+    // Header
+    const pageTitle = document.getElementById('page-title');
     const currentRoomDisplay = document.getElementById('current-room-display');
+    const connectionStatus = document.getElementById('connection-status');
     const logoutBtn = document.getElementById('logout-btn');
+
+    // Room List
+    const roomListContainer = document.getElementById('room-list');
+    const roomStatusGrid = document.getElementById('room-status-grid');
+    const btnBackRooms = document.getElementById('btn-back-rooms');
+
+    // Admin Overview
+    const totalRoomsEl = document.getElementById('total-rooms');
+    const activeRoomsEl = document.getElementById('active-rooms');
+    const avgTempEl = document.getElementById('avg-temp');
+    const avgHumidityEl = document.getElementById('avg-humidity');
 
     // Controls
     const masterOff = document.getElementById('master-off');
     const masterOn = document.getElementById('master-on');
-
     const autoModeToggle = document.getElementById('auto-mode-toggle');
-    const connectionStatus = document.getElementById('connection-status');
 
     // Sensors
     const tempValue = document.getElementById('temp-value');
@@ -41,6 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentUserRole = null;
     let currentRoomId = null;
     let activeListeners = [];
+    let roomsData = {};
+
+    // Charts
+    let tempChart = null;
+    let humidityChart = null;
+    let lightChart = null;
+    let usageChart = null;
 
     // --- Auth Check ---
     auth.onAuthStateChanged((user) => {
@@ -66,147 +93,244 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentUserRole = 'admin';
                     }
 
+                    currentRoomDisplay.textContent = user.email.split('@')[0];
+
                     if (currentUserRole === 'admin') {
-                        loadAdminDashboard();
+                        showView('dashboard');
+                        loadAdminData();
                     } else {
-                        loadRoomView(homeRoom);
+                        // Non-admin goes directly to their room
+                        hideNavForNonAdmin();
+                        loadRoomControl(homeRoom);
                     }
                 } else {
                     if (user.email === SUPER_ADMIN_EMAIL) {
                         currentUserRole = 'admin';
-                        loadAdminDashboard();
+                        currentRoomDisplay.textContent = 'Admin';
+                        showView('dashboard');
+                        loadAdminData();
                         return;
                     }
                     console.error("No user profile found");
-                    auth.signOut(); // Will trigger redirect
+                    auth.signOut();
                 }
             });
     }
 
-    function loadAdminDashboard() {
-        adminView.style.display = 'block';
-        roomView.style.display = 'none';
-        btnBackAdmin.style.display = 'none';
-        currentRoomDisplay.textContent = "Admin Control Panel";
+    function hideNavForNonAdmin() {
+        navDashboard.style.display = 'none';
+        navRooms.style.display = 'none';
+        navStatistics.style.display = 'none';
+        navSettings.style.display = 'none';
+    }
 
-        roomListContainer.innerHTML = '<p>Đang tải danh sách phòng...</p>';
+    // --- View Management ---
+    function showView(viewName) {
+        // Hide all views
+        adminDashboardView.style.display = 'none';
+        roomsView.style.display = 'none';
+        roomControlView.style.display = 'none';
+        statisticsView.style.display = 'none';
+
+        // Update active nav
+        allNavItems.forEach(item => item.classList.remove('active'));
+
+        switch (viewName) {
+            case 'dashboard':
+                adminDashboardView.style.display = 'block';
+                navDashboard.classList.add('active');
+                pageTitle.textContent = 'Dashboard';
+                break;
+            case 'rooms':
+                roomsView.style.display = 'block';
+                navRooms.classList.add('active');
+                pageTitle.textContent = 'Phòng Học';
+                break;
+            case 'room-control':
+                roomControlView.style.display = 'block';
+                navRooms.classList.add('active');
+                pageTitle.textContent = 'Điều Khiển Phòng - ' + currentRoomId;
+                break;
+            case 'statistics':
+                statisticsView.style.display = 'block';
+                navStatistics.classList.add('active');
+                pageTitle.textContent = 'Thống Kê';
+                loadStatistics();
+                break;
+        }
+    }
+
+    // --- Admin Data ---
+    function loadAdminData() {
         detachListeners();
 
         const roomsRef = db.ref('Rooms');
         const roomsCb = (snapshot) => {
-            const rooms = snapshot.val();
-            roomListContainer.innerHTML = '';
-
-            if (!rooms) {
-                roomListContainer.innerHTML = '<p>Chưa có phòng nào được tạo dữ liệu.</p>';
-                return;
-            }
-
-            Object.keys(rooms).forEach(roomId => {
-                const card = document.createElement('div');
-                card.className = 'room-card';
-                card.id = `room-card-${roomId}`;
-
-                // Initial Structure
-                card.innerHTML = `
-                    <div style="position: relative; display: inline-block;">
-                        <i class="fa-solid fa-chalkboard-user"></i>
-                        <span class="presence-dot" id="presence-dot-${roomId}" 
-                              style="position: absolute; top: -5px; right: -5px; width: 12px; height: 12px; 
-                                     border-radius: 50%; background: #bdc3c7; border: 2px solid #fff; 
-                                     box-shadow: 0 0 5px rgba(0,0,0,0.1);"></span>
-                    </div>
-                    <h3>${roomId}</h3>
-                    <p id="presence-text-${roomId}" style="font-size: 0.8rem; color: #95a5a6; margin-top: 5px;">Trống</p>
-                `;
-
-                card.addEventListener('click', () => {
-                    loadRoomView(roomId);
-                });
-                roomListContainer.appendChild(card);
-
-                // Listen for Presence
-                const presenceRef = db.ref(`Rooms/${roomId}/PhatHienNguoi`);
-                const presenceCb = (snap) => {
-                    const val = snap.val();
-                    const isPresent = val == 1 || val === true || val === '1' || val === 'motion';
-
-                    const dot = document.getElementById(`presence-dot-${roomId}`);
-                    const text = document.getElementById(`presence-text-${roomId}`);
-
-                    if (dot && text) {
-                        if (isPresent) {
-                            dot.style.background = '#00b894';
-                            dot.style.boxShadow = '0 0 8px #00b894';
-                            text.textContent = "Đang sử dụng";
-                            text.style.color = '#00b894';
-                            text.style.fontWeight = "600";
-                        } else {
-                            dot.style.background = '#bdc3c7';
-                            dot.style.boxShadow = 'none';
-                            text.textContent = "Trống";
-                            text.style.color = '#95a5a6';
-                            text.style.fontWeight = "400";
-                        }
-                    }
-                };
-
-                presenceRef.on('value', presenceCb);
-                // Note: We should track these listeners to detach them later, 
-                // but since this is inside the room list which regenerates, 
-                // we might accumulate listeners if we are not careful. 
-                // Ideally, 'activeListeners' clears everything on detachListeners(). 
-                // But detachListeners() only clears what is IN activeListeners.
-                // We must push these new listeners to activeListeners.
-                activeListeners.push({ ref: presenceRef, event: 'value', callback: presenceCb });
-            });
+            roomsData = snapshot.val() || {};
+            updateAdminOverview();
+            updateRoomStatusGrid();
+            updateRoomsList();
         };
         roomsRef.on('value', roomsCb);
         activeListeners.push({ ref: roomsRef, event: 'value', callback: roomsCb });
+
+        // Connection status
+        const connectedRef = db.ref(".info/connected");
+        const connectedCb = (snap) => {
+            if (snap.val() === true) {
+                connectionStatus.style.opacity = '1';
+                connectionStatus.querySelector('span').textContent = 'Đã kết nối';
+                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#27AE60';
+            } else {
+                connectionStatus.style.opacity = '0.7';
+                connectionStatus.querySelector('span').textContent = 'Mất kết nối';
+                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#E74C3C';
+            }
+        };
+        connectedRef.on("value", connectedCb);
+        activeListeners.push({ ref: connectedRef, event: "value", callback: connectedCb });
     }
 
-    function loadRoomView(roomId) {
-        currentRoomId = roomId;
+    function updateAdminOverview() {
+        const roomKeys = Object.keys(roomsData);
+        const totalRooms = roomKeys.length;
+        let activeRooms = 0;
+        let totalTemp = 0;
+        let totalHumidity = 0;
+        let tempCount = 0;
+        let humidityCount = 0;
 
-        adminView.style.display = 'none';
-        roomView.style.display = 'block';
-        currentRoomDisplay.textContent = roomId;
+        roomKeys.forEach(roomId => {
+            const room = roomsData[roomId];
+
+            // Check presence
+            const presence = room.PhatHienNguoi;
+            if (presence == 1 || presence === true || presence === '1') {
+                activeRooms++;
+            }
+
+            // Sum temperature
+            if (room.NhietDo !== undefined && room.NhietDo !== null) {
+                totalTemp += parseFloat(room.NhietDo);
+                tempCount++;
+            }
+
+            // Sum humidity
+            if (room.DoAm !== undefined && room.DoAm !== null) {
+                totalHumidity += parseFloat(room.DoAm);
+                humidityCount++;
+            }
+        });
+
+        totalRoomsEl.textContent = totalRooms;
+        activeRoomsEl.textContent = activeRooms;
+        avgTempEl.textContent = tempCount > 0 ? (totalTemp / tempCount).toFixed(1) : '--';
+        avgHumidityEl.textContent = humidityCount > 0 ? (totalHumidity / humidityCount).toFixed(0) : '--';
+    }
+
+    function updateRoomStatusGrid() {
+        const roomKeys = Object.keys(roomsData);
+        roomStatusGrid.innerHTML = '';
+
+        if (roomKeys.length === 0) {
+            roomStatusGrid.innerHTML = '<p style="color: #7F8C8D;">Chưa có phòng nào.</p>';
+            return;
+        }
+
+        roomKeys.forEach(roomId => {
+            const room = roomsData[roomId];
+            const isActive = room.PhatHienNguoi == 1 || room.PhatHienNguoi === true;
+
+            const card = document.createElement('div');
+            card.className = `room-status-card ${isActive ? 'active' : ''}`;
+            card.innerHTML = `
+                <div class="room-status-header">
+                    <span class="room-name">${roomId}</span>
+                    <span class="room-status-dot ${isActive ? 'active' : ''}"></span>
+                </div>
+                <div class="room-status-info">
+                    <div class="info-item">
+                        <i class="fa-solid fa-temperature-half"></i>
+                        <span>${room.NhietDo || '--'}°C</span>
+                    </div>
+                    <div class="info-item">
+                        <i class="fa-solid fa-droplet"></i>
+                        <span>${room.DoAm || '--'}%</span>
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', () => {
+                loadRoomControl(roomId);
+            });
+            roomStatusGrid.appendChild(card);
+        });
+    }
+
+    function updateRoomsList() {
+        const roomKeys = Object.keys(roomsData);
+        roomListContainer.innerHTML = '';
+
+        if (roomKeys.length === 0) {
+            roomListContainer.innerHTML = '<p style="color: #7F8C8D;">Chưa có phòng nào được tạo.</p>';
+            return;
+        }
+
+        roomKeys.forEach(roomId => {
+            const room = roomsData[roomId];
+            const isActive = room.PhatHienNguoi == 1 || room.PhatHienNguoi === true;
+
+            const card = document.createElement('div');
+            card.className = 'room-card';
+            card.innerHTML = `
+                <div style="position: relative; display: inline-block;">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span class="presence-dot ${isActive ? 'active' : ''}"></span>
+                </div>
+                <h3>${roomId}</h3>
+                <p class="room-status-text">${isActive ? 'Đang sử dụng' : 'Trống'}</p>
+            `;
+            card.addEventListener('click', () => {
+                loadRoomControl(roomId);
+            });
+            roomListContainer.appendChild(card);
+        });
+    }
+
+    // --- Room Control ---
+    function loadRoomControl(roomId) {
+        currentRoomId = roomId;
+        showView('room-control');
 
         if (currentUserRole === 'admin') {
-            btnBackAdmin.style.display = 'flex';
+            btnBackRooms.style.display = 'flex';
         } else {
-            btnBackAdmin.style.display = 'none';
+            btnBackRooms.style.display = 'none';
         }
 
         setupDeviceListeners(roomId);
-    }
-
-    function detachListeners() {
-        activeListeners.forEach(l => l.ref.off(l.event, l.callback));
-        activeListeners = [];
     }
 
     function setupDeviceListeners(roomId) {
         detachListeners();
         const basePath = `Rooms/${roomId}`;
 
-        // 1. Connection
+        // Connection
         const connectedRef = db.ref(".info/connected");
         const connectedCb = (snap) => {
             if (snap.val() === true) {
                 connectionStatus.style.opacity = '1';
                 connectionStatus.querySelector('span').textContent = 'Đã kết nối';
-                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#00b894';
+                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#27AE60';
             } else {
                 connectionStatus.style.opacity = '0.7';
                 connectionStatus.querySelector('span').textContent = 'Mất kết nối';
-                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#ff7675';
+                connectionStatus.querySelector('.status-dot').style.backgroundColor = '#E74C3C';
             }
         };
         connectedRef.on("value", connectedCb);
         activeListeners.push({ ref: connectedRef, event: "value", callback: connectedCb });
 
-        // 2. Sensors
+        // Sensors
         const sensorMap = {
             'NhietDo': tempValue,
             'DoAm': humidityValue,
@@ -224,22 +348,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (key === 'PhatHienNguoi') {
                     const hasMotion = val == 1 || val === true || val === '1' || val === 'motion';
                     presenceValue.textContent = hasMotion ? 'Có' : 'Không';
-                    presenceValue.style.color = hasMotion ? '#00b894' : '#fab1a0';
+                    presenceValue.style.color = hasMotion ? '#27AE60' : '#E74C3C';
                 } else {
                     if (key === 'NhietDo') {
                         tempValue.textContent = val !== null ? val : '--';
-                        // Update circular progress (0-50°C range)
                         const progress = Math.min(100, (val / 50) * 100);
                         updateCircularProgress('temp-progress', progress);
                     }
                     if (key === 'DoAm') {
                         humidityValue.textContent = val !== null ? val : '--';
-                        // Update circular progress (0-100% range)
                         updateCircularProgress('humidity-progress', val || 0);
                     }
                     if (key === 'AnhSang') {
                         lightValValue.textContent = val !== null ? val : '--';
-                        // Update circular progress (0-1000 Lux range)
                         const progress = Math.min(100, (val / 1000) * 100);
                         updateCircularProgress('light-progress', progress);
                     }
@@ -249,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeListeners.push({ ref: ref, event: 'value', callback: cb });
         });
 
-        // 3. Devices
+        // Devices
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             // Lights
             const lightRef = db.ref(`${basePath}/Den${i}`);
@@ -289,25 +410,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             speedRef.on('value', speedCb);
-            speedRef.on('value', speedCb);
             activeListeners.push({ ref: speedRef, event: 'value', callback: speedCb });
         }
 
-        // 4. Auto Mode
+        // Auto Mode
         const autoModeRef = db.ref(`${basePath}/CheDoTuDong`);
-
-        // FORCE ENABLE AUTO MODE ON LOAD
         autoModeRef.set(true).catch(e => console.error("Auto Force Error", e));
 
         const autoModeCb = (snap) => {
             const isAuto = snap.val() === true;
             if (autoModeToggle) {
                 autoModeToggle.checked = isAuto;
-                // Toggle is now unlocked for everyone (but starts ON)
                 autoModeToggle.disabled = false;
             }
 
-            // Disable/Enable manual controls
             for (let i = 1; i <= DEVICE_COUNT; i++) {
                 const lToggle = document.getElementById(`light-toggle-${i}`);
                 const fToggle = document.getElementById(`fan-toggle-${i}`);
@@ -322,19 +438,131 @@ document.addEventListener('DOMContentLoaded', () => {
         activeListeners.push({ ref: autoModeRef, event: 'value', callback: autoModeCb });
     }
 
+    function detachListeners() {
+        activeListeners.forEach(l => l.ref.off(l.event, l.callback));
+        activeListeners = [];
+    }
+
+    // --- Statistics ---
+    function loadStatistics() {
+        const roomKeys = Object.keys(roomsData);
+        const labels = roomKeys;
+        const temps = [];
+        const humidities = [];
+        const lights = [];
+        const usageData = [];
+
+        roomKeys.forEach(roomId => {
+            const room = roomsData[roomId];
+            temps.push(room.NhietDo || 0);
+            humidities.push(room.DoAm || 0);
+            lights.push(room.AnhSang || 0);
+            usageData.push(room.PhatHienNguoi == 1 || room.PhatHienNguoi === true ? 1 : 0);
+        });
+
+        // Destroy existing charts
+        if (tempChart) tempChart.destroy();
+        if (humidityChart) humidityChart.destroy();
+        if (lightChart) lightChart.destroy();
+        if (usageChart) usageChart.destroy();
+
+        // Temperature Chart
+        const tempCtx = document.getElementById('tempChart').getContext('2d');
+        tempChart = new Chart(tempCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Nhiệt Độ (°C)',
+                    data: temps,
+                    backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                    borderColor: '#E74C3C',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 50 } }
+            }
+        });
+
+        // Humidity Chart
+        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+        humidityChart = new Chart(humidityCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Độ Ẩm (%)',
+                    data: humidities,
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                    borderColor: '#3498DB',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+
+        // Light Chart
+        const lightCtx = document.getElementById('lightChart').getContext('2d');
+        lightChart = new Chart(lightCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Ánh Sáng (Lux)',
+                    data: lights,
+                    backgroundColor: 'rgba(241, 196, 15, 0.7)',
+                    borderColor: '#F1C40F',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Usage Chart (Pie)
+        const usageCtx = document.getElementById('usageChart').getContext('2d');
+        const activeCount = usageData.filter(v => v === 1).length;
+        const inactiveCount = usageData.length - activeCount;
+        usageChart = new Chart(usageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Đang Sử Dụng', 'Trống'],
+                datasets: [{
+                    data: [activeCount, inactiveCount],
+                    backgroundColor: ['#27AE60', '#BDC3C7'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    }
+
     // --- Actions ---
     function toggleLight(index, isOn) {
         if (!currentRoomId) return;
-
-        // Optimistic UI Update
         updateLightUI(index, isOn);
-        state.lights[index] = isOn; // Update local state immediately
+        state.lights[index] = isOn;
 
         const val = isOn ? 1 : 0;
         db.ref(`Rooms/${currentRoomId}/Den${index}`).set(val)
             .catch(err => {
                 showToast(`Lỗi: ` + err.message, 'error');
-                // Revert on error
                 updateLightUI(index, !isOn);
                 state.lights[index] = !isOn;
                 const toggle = document.getElementById(`light-toggle-${index}`);
@@ -344,16 +572,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function toggleFan(index, isOn) {
         if (!currentRoomId) return;
-
-        // Optimistic UI Update
         updateFanUI(index, isOn);
-        state.fans[index] = isOn; // Update local state immediately
+        state.fans[index] = isOn;
 
         const val = isOn ? 1 : 0;
         db.ref(`Rooms/${currentRoomId}/Quat${index}`).set(val)
             .catch(err => {
                 showToast(`Lỗi: ` + err.message, 'error');
-                // Revert on error
                 updateFanUI(index, !isOn);
                 state.fans[index] = !isOn;
                 const toggle = document.getElementById(`fan-toggle-${index}`);
@@ -363,8 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setFanSpeed(index, value) {
         if (!currentRoomId) return;
-        // Speed slider is already somewhat optimistic via 'input' listener updating label
-        // But we can update state immediately too
         state.fanSpeeds[index] = parseInt(value);
         updateFanAnimation(index);
 
@@ -374,8 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function turnAllOff() {
         if (!currentRoomId) return;
-
-        // Optimistic Update
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             updateLightUI(i, false);
             updateFanUI(i, false);
@@ -393,14 +614,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updates[`Rooms/${currentRoomId}/Quat${i}`] = 0;
         }
         db.ref().update(updates)
-            .then(() => showToast('Đã tắt tất cả (Phòng ' + currentRoomId + ')'))
+            .then(() => showToast('Đã tắt tất cả'))
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
     function turnAllOn() {
         if (!currentRoomId) return;
-
-        // Optimistic Update
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             updateLightUI(i, true);
             updateFanUI(i, true);
@@ -418,7 +637,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updates[`Rooms/${currentRoomId}/Quat${i}`] = 1;
         }
         db.ref().update(updates)
-            .then(() => showToast('Đã bật tất cả (Phòng ' + currentRoomId + ')', 'success'))
+            .then(() => showToast('Đã bật tất cả', 'success'))
             .catch(err => showToast('Lỗi: ' + err.message, 'error'));
     }
 
@@ -482,18 +701,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    // --- Inputs ---
+    // --- Event Listeners ---
     if (logoutBtn) logoutBtn.addEventListener('click', () => {
         auth.signOut().then(() => {
             window.location.href = 'index.html';
         });
     });
 
-    if (btnBackAdmin) {
-        btnBackAdmin.addEventListener('click', () => {
-            if (currentUserRole === 'admin') loadAdminDashboard();
-        });
-    }
+    // Navigation
+    if (navDashboard) navDashboard.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('dashboard');
+        loadAdminData();
+    });
+
+    if (navRooms) navRooms.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('rooms');
+    });
+
+    if (navStatistics) navStatistics.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('statistics');
+    });
+
+    if (btnBackRooms) btnBackRooms.addEventListener('click', () => {
+        showView('rooms');
+    });
 
     if (masterOff) masterOff.addEventListener('click', turnAllOff);
     if (masterOn) masterOn.addEventListener('click', turnAllOn);

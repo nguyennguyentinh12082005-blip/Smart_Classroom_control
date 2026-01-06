@@ -824,6 +824,227 @@ input:disabled+.slider {
     }
 }
 
+/* ===== ADMIN OVERVIEW STATS ===== */
+.overview-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.overview-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.overview-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.overview-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.overview-icon.rooms {
+    background: rgba(74, 144, 217, 0.15);
+    color: var(--primary-color);
+}
+
+.overview-icon.active {
+    background: rgba(39, 174, 96, 0.15);
+    color: var(--success-color);
+}
+
+.overview-icon.temp {
+    background: rgba(231, 76, 60, 0.15);
+    color: var(--temp-color);
+}
+
+.overview-icon.humidity {
+    background: rgba(52, 152, 219, 0.15);
+    color: var(--humidity-color);
+}
+
+.overview-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.overview-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.overview-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* ===== QUICK STATUS GRID ===== */
+.quick-status {
+    margin-bottom: 32px;
+}
+
+.room-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.room-status-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.room-status-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+
+.room-status-card.active {
+    border-left: 4px solid var(--success-color);
+}
+
+.room-status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.room-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-dark);
+}
+
+.room-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-light);
+}
+
+.room-status-dot.active {
+    background: var(--success-color);
+    box-shadow: 0 0 8px var(--success-color);
+}
+
+.room-status-info {
+    display: flex;
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.info-item i {
+    font-size: 0.85rem;
+}
+
+/* ===== ROOM CARD PRESENCE ===== */
+.room-card .presence-dot {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--text-light);
+    border: 2px solid #fff;
+}
+
+.room-card .presence-dot.active {
+    background: var(--success-color);
+    box-shadow: 0 0 8px var(--success-color);
+}
+
+.room-status-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* ===== STATISTICS CHARTS ===== */
+.stats-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.chart-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.chart-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+}
+
+.chart-title i {
+    color: var(--primary-color);
+}
+
+.chart-container {
+    height: 250px;
+    position: relative;
+}
+
+/* ===== RESPONSIVE FOR NEW COMPONENTS ===== */
+@media (max-width: 1200px) {
+    .overview-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .overview-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .room-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ===== LOGIN PAGE (Keep for index.html) ===== */
 .login-wrapper {
     width: 100%;
