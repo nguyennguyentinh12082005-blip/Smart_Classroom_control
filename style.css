@@ -1045,6 +1045,386 @@ input:disabled+.slider {
     }
 }
 
+/* ===== SETTINGS PAGE ===== */
+.settings-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.settings-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.settings-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-title i {
+    color: var(--primary-color);
+}
+
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-color);
+    border-radius: 12px;
+}
+
+.profile-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-avatar i {
+    font-size: 2rem;
+    color: #fff;
+}
+
+.profile-email {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 1rem;
+}
+
+.profile-role {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.btn-settings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-settings.primary {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.btn-settings.primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-settings.danger {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+}
+
+.btn-settings.danger:hover {
+    background: var(--danger-color);
+    color: #fff;
+}
+
+.add-room-form {
+    display: flex;
+    gap: 12px;
+}
+
+.settings-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: var(--bg-color);
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: #fff;
+}
+
+.settings-input-small {
+    width: 80px;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    background: var(--bg-color);
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.setting-item:last-of-type {
+    border-bottom: none;
+}
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.setting-name {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.setting-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.room-list-manage {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.room-manage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-color);
+    border-radius: 10px;
+}
+
+.room-manage-name {
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.btn-delete-room {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-room:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.about-info {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-muted);
+}
+
+.about-info p {
+    margin-bottom: 8px;
+}
+
+.about-info strong {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+}
+
+.about-copyright {
+    margin-top: 16px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+@media (max-width: 900px) {
+    .settings-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Settings Select */
+.settings-select {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: var(--bg-color);
+    color: var(--text-dark);
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.settings-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Theme Toggle Group */
+.theme-toggle-group {
+    display: flex;
+    gap: 8px;
+    background: var(--bg-color);
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.theme-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-btn.active {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.theme-btn:hover:not(.active) {
+    background: var(--border-color);
+}
+
+/* Add User Form */
+.add-user-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.add-user-form .settings-input {
+    flex: 2;
+    min-width: 200px;
+}
+
+.add-user-form .settings-select {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* User List Manage */
+.user-list-manage {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.user-manage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-color);
+    border-radius: 10px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.user-email {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+}
+
+.user-room {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.btn-delete-user {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-user:hover {
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* ===== DARK THEME ===== */
+body.dark-theme {
+    --bg-color: #1a1a2e;
+    --sidebar-bg: #16213e;
+    --card-bg: #1f2544;
+    --text-dark: #eaeaea;
+    --text-muted: #a0a0a0;
+    --text-light: #6a6a6a;
+    --border-color: #2a2a4a;
+}
+
+body.dark-theme .login-wrapper {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body.dark-theme .login-card {
+    background: var(--card-bg);
+}
+
+body.dark-theme .input-group input {
+    background: var(--bg-color);
+    color: var(--text-dark);
+}
+
+body.dark-theme .settings-input,
+body.dark-theme .settings-select,
+body.dark-theme .settings-input-small {
+    background: var(--bg-color);
+    color: var(--text-dark);
+    border-color: var(--border-color);
+}
+
 /* ===== LOGIN PAGE (Keep for index.html) ===== */
 .login-wrapper {
     width: 100%;

@@ -126,11 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- View Management ---
     function showView(viewName) {
+        // Get settings view
+        const settingsView = document.getElementById('settings-view');
+
         // Hide all views
         adminDashboardView.style.display = 'none';
         roomsView.style.display = 'none';
         roomControlView.style.display = 'none';
         statisticsView.style.display = 'none';
+        if (settingsView) settingsView.style.display = 'none';
 
         // Update active nav
         allNavItems.forEach(item => item.classList.remove('active'));
@@ -156,6 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 navStatistics.classList.add('active');
                 pageTitle.textContent = 'Thống Kê';
                 loadStatistics();
+                break;
+            case 'settings':
+                if (settingsView) settingsView.style.display = 'block';
+                navSettings.classList.add('active');
+                pageTitle.textContent = 'Cài Đặt';
+                loadSettings();
                 break;
         }
     }
@@ -578,6 +588,363 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Settings ---
+    function loadSettings() {
+        // Load user info
+        const user = auth.currentUser;
+        const settingsEmail = document.getElementById('settings-email');
+        const settingsRole = document.getElementById('settings-role');
+        const roomManagementCard = document.getElementById('room-management-card');
+
+        if (settingsEmail) {
+            settingsEmail.textContent = user.email;
+        }
+        if (settingsRole) {
+            settingsRole.textContent = currentUserRole === 'admin' ? 'Quản trị viên' : 'Người dùng';
+        }
+
+        // Show/hide admin-only features
+        if (roomManagementCard) {
+            roomManagementCard.style.display = currentUserRole === 'admin' ? 'block' : 'none';
+        }
+
+        const userManagementCard = document.getElementById('user-management-card');
+        if (userManagementCard) {
+            userManagementCard.style.display = currentUserRole === 'admin' ? 'block' : 'none';
+        }
+
+        // Load room list and user list for admin
+        if (currentUserRole === 'admin') {
+            loadRoomListForManagement();
+            loadUserList();
+        }
+
+        // Load saved settings
+        db.ref('Settings').once('value').then(snapshot => {
+            const settings = snapshot.val() || {};
+            const tempThreshold = document.getElementById('temp-threshold');
+            const humidityThreshold = document.getElementById('humidity-threshold');
+            const autoOffToggle = document.getElementById('auto-off-toggle');
+            const notifyTemp = document.getElementById('notify-temp');
+            const notifyHumidity = document.getElementById('notify-humidity');
+            const notifyPresence = document.getElementById('notify-presence');
+
+            if (tempThreshold && settings.tempThreshold) {
+                tempThreshold.value = settings.tempThreshold;
+            }
+            if (humidityThreshold && settings.humidityThreshold) {
+                humidityThreshold.value = settings.humidityThreshold;
+            }
+            if (autoOffToggle && settings.autoOff !== undefined) {
+                autoOffToggle.checked = settings.autoOff;
+            }
+
+            // Load notification settings
+            if (settings.notifications) {
+                if (notifyTemp) notifyTemp.checked = settings.notifications.temp !== false;
+                if (notifyHumidity) notifyHumidity.checked = settings.notifications.humidity !== false;
+                if (notifyPresence) notifyPresence.checked = settings.notifications.presence === true;
+            }
+        });
+    }
+
+    function loadRoomListForManagement() {
+        const container = document.getElementById('room-list-manage');
+        if (!container) return;
+
+        db.ref('Rooms').once('value').then(snapshot => {
+            const rooms = snapshot.val() || {};
+            const roomKeys = Object.keys(rooms);
+
+            container.innerHTML = '';
+
+            if (roomKeys.length === 0) {
+                container.innerHTML = '<p style="color: #7F8C8D;">Chưa có phòng nào.</p>';
+                return;
+            }
+
+            roomKeys.forEach(roomId => {
+                const item = document.createElement('div');
+                item.className = 'room-manage-item';
+                item.innerHTML = `
+                    <span class="room-manage-name">${roomId}</span>
+                    <button class="btn-delete-room" data-room="${roomId}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+
+            // Add delete event listeners
+            container.querySelectorAll('.btn-delete-room').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const roomId = e.currentTarget.dataset.room;
+                    if (confirm(`Bạn có chắc muốn xóa phòng ${roomId}?`)) {
+                        deleteRoom(roomId);
+                    }
+                });
+            });
+        });
+    }
+
+    function addRoom(roomId) {
+        if (!roomId || roomId.trim() === '') {
+            showToast('Vui lòng nhập mã phòng', 'error');
+            return;
+        }
+
+        const cleanRoomId = roomId.trim().toUpperCase();
+
+        // Create room with default values
+        const defaultRoomData = {
+            NhietDo: 25,
+            DoAm: 60,
+            AnhSang: 300,
+            PhatHienNguoi: 0,
+            CheDoTuDong: true,
+            Den1: 0, Den2: 0, Den3: 0,
+            Quat1: 0, Quat2: 0, Quat3: 0,
+            TocDoQuat1: 50, TocDoQuat2: 50, TocDoQuat3: 50
+        };
+
+        db.ref(`Rooms/${cleanRoomId}`).set(defaultRoomData)
+            .then(() => {
+                showToast(`Đã thêm phòng ${cleanRoomId}`, 'success');
+                document.getElementById('new-room-id').value = '';
+                loadRoomListForManagement();
+            })
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    }
+
+    function deleteRoom(roomId) {
+        db.ref(`Rooms/${roomId}`).remove()
+            .then(() => {
+                showToast(`Đã xóa phòng ${roomId}`, 'success');
+                loadRoomListForManagement();
+            })
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    }
+
+    function saveSettings() {
+        const tempThreshold = document.getElementById('temp-threshold');
+        const humidityThreshold = document.getElementById('humidity-threshold');
+        const autoOffToggle = document.getElementById('auto-off-toggle');
+        const notifyTemp = document.getElementById('notify-temp');
+        const notifyHumidity = document.getElementById('notify-humidity');
+        const notifyPresence = document.getElementById('notify-presence');
+
+        const settings = {
+            tempThreshold: tempThreshold ? parseInt(tempThreshold.value) : 35,
+            humidityThreshold: humidityThreshold ? parseInt(humidityThreshold.value) : 80,
+            autoOff: autoOffToggle ? autoOffToggle.checked : true,
+            notifications: {
+                temp: notifyTemp ? notifyTemp.checked : true,
+                humidity: notifyHumidity ? notifyHumidity.checked : true,
+                presence: notifyPresence ? notifyPresence.checked : false
+            }
+        };
+
+        db.ref('Settings').set(settings)
+            .then(() => showToast(translations[currentLanguage].settingsSaved || 'Đã lưu cài đặt', 'success'))
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    }
+
+    // --- Language / i18n ---
+    let currentLanguage = localStorage.getItem('language') || 'vi';
+
+    const translations = {
+        vi: {
+            profile: 'Thông Tin Tài Khoản',
+            changePassword: 'Đổi Mật Khẩu',
+            appearance: 'Giao Diện',
+            language: 'Ngôn ngữ',
+            languageDesc: 'Chọn ngôn ngữ hiển thị',
+            theme: 'Chế độ giao diện',
+            themeDesc: 'Sáng hoặc tối',
+            notifications: 'Thông Báo',
+            tempAlert: 'Cảnh báo nhiệt độ cao',
+            tempAlertDesc: 'Thông báo khi nhiệt độ vượt ngưỡng',
+            humidityAlert: 'Cảnh báo độ ẩm cao',
+            humidityAlertDesc: 'Thông báo khi độ ẩm vượt ngưỡng',
+            presenceAlert: 'Thông báo phát hiện người',
+            presenceAlertDesc: 'Thông báo khi có người vào phòng',
+            roomManagement: 'Quản Lý Phòng Học',
+            addRoom: 'Thêm Phòng',
+            userManagement: 'Quản Lý Người Dùng',
+            addUser: 'Thêm',
+            systemSettings: 'Cài Đặt Hệ Thống',
+            tempThreshold: 'Ngưỡng nhiệt độ cảnh báo',
+            tempThresholdDesc: 'Cảnh báo khi nhiệt độ vượt ngưỡng',
+            humidityThreshold: 'Ngưỡng độ ẩm cảnh báo',
+            humidityThresholdDesc: 'Cảnh báo khi độ ẩm vượt ngưỡng',
+            autoOff: 'Tự động tắt thiết bị',
+            autoOffDesc: 'Tắt tất cả khi không có người',
+            saveSettings: 'Lưu Cài Đặt',
+            about: 'Thông Tin',
+            settingsSaved: 'Đã lưu cài đặt',
+            userAdded: 'Đã thêm người dùng',
+            userDeleted: 'Đã xóa người dùng'
+        },
+        en: {
+            profile: 'Account Information',
+            changePassword: 'Change Password',
+            appearance: 'Appearance',
+            language: 'Language',
+            languageDesc: 'Select display language',
+            theme: 'Theme',
+            themeDesc: 'Light or dark mode',
+            notifications: 'Notifications',
+            tempAlert: 'High temperature alert',
+            tempAlertDesc: 'Notify when temperature exceeds threshold',
+            humidityAlert: 'High humidity alert',
+            humidityAlertDesc: 'Notify when humidity exceeds threshold',
+            presenceAlert: 'Presence detection alert',
+            presenceAlertDesc: 'Notify when someone enters room',
+            roomManagement: 'Room Management',
+            addRoom: 'Add Room',
+            userManagement: 'User Management',
+            addUser: 'Add',
+            systemSettings: 'System Settings',
+            tempThreshold: 'Temperature threshold',
+            tempThresholdDesc: 'Alert when temperature exceeds threshold',
+            humidityThreshold: 'Humidity threshold',
+            humidityThresholdDesc: 'Alert when humidity exceeds threshold',
+            autoOff: 'Auto turn off devices',
+            autoOffDesc: 'Turn off all when no presence',
+            saveSettings: 'Save Settings',
+            about: 'About',
+            settingsSaved: 'Settings saved',
+            userAdded: 'User added',
+            userDeleted: 'User deleted'
+        }
+    };
+
+    function applyLanguage(lang) {
+        currentLanguage = lang;
+        localStorage.setItem('language', lang);
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (translations[lang] && translations[lang][key]) {
+                el.textContent = translations[lang][key];
+            }
+        });
+
+        const languageSelect = document.getElementById('language-select');
+        if (languageSelect) languageSelect.value = lang;
+    }
+
+    // --- Theme ---
+    let currentTheme = localStorage.getItem('theme') || 'light';
+
+    function applyTheme(theme) {
+        currentTheme = theme;
+        localStorage.setItem('theme', theme);
+
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+        }
+
+        // Update buttons
+        const lightBtn = document.getElementById('theme-light');
+        const darkBtn = document.getElementById('theme-dark');
+        if (lightBtn && darkBtn) {
+            lightBtn.classList.toggle('active', theme === 'light');
+            darkBtn.classList.toggle('active', theme === 'dark');
+        }
+    }
+
+    // --- User Management ---
+    function loadUserList() {
+        const container = document.getElementById('user-list-manage');
+        const roomSelect = document.getElementById('new-user-room');
+        if (!container) return;
+
+        // Load rooms for select dropdown
+        db.ref('Rooms').once('value').then(snapshot => {
+            const rooms = snapshot.val() || {};
+            if (roomSelect) {
+                roomSelect.innerHTML = '<option value="">Chọn phòng...</option>';
+                Object.keys(rooms).forEach(roomId => {
+                    roomSelect.innerHTML += `<option value="${roomId}">${roomId}</option>`;
+                });
+            }
+        });
+
+        // Load users
+        db.ref('users').once('value').then(snapshot => {
+            const users = snapshot.val() || {};
+            container.innerHTML = '';
+
+            const userEntries = Object.entries(users);
+            if (userEntries.length === 0) {
+                container.innerHTML = '<p style="color: #7F8C8D;">Chưa có người dùng nào.</p>';
+                return;
+            }
+
+            userEntries.forEach(([uid, userData]) => {
+                if (userData.role === 'admin') return; // Skip admins
+
+                const item = document.createElement('div');
+                item.className = 'user-manage-item';
+                item.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-email">${userData.email || uid}</span>
+                        <span class="user-room">Phòng: ${userData.roomId || 'N/A'}</span>
+                    </div>
+                    <button class="btn-delete-user" data-uid="${uid}">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(item);
+            });
+
+            // Add delete listeners
+            container.querySelectorAll('.btn-delete-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const uid = e.currentTarget.dataset.uid;
+                    if (confirm('Bạn có chắc muốn xóa người dùng này?')) {
+                        deleteUser(uid);
+                    }
+                });
+            });
+        });
+    }
+
+    function addUser(email, roomId) {
+        if (!email || !roomId) {
+            showToast('Vui lòng nhập email và chọn phòng', 'error');
+            return;
+        }
+
+        // Note: In a real app, you'd create user via Firebase Admin SDK
+        // For now, we'll just store user data
+        const userRef = db.ref('pendingUsers').push();
+        userRef.set({
+            email: email,
+            roomId: roomId,
+            createdAt: Date.now()
+        }).then(() => {
+            showToast(translations[currentLanguage].userAdded || 'Đã thêm người dùng', 'success');
+            document.getElementById('new-user-email').value = '';
+            document.getElementById('new-user-room').value = '';
+        }).catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    }
+
+    function deleteUser(uid) {
+        db.ref(`users/${uid}`).remove()
+            .then(() => {
+                showToast(translations[currentLanguage].userDeleted || 'Đã xóa người dùng', 'success');
+                loadUserList();
+            })
+            .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+    }
+
+    // Apply saved preferences on load
+    applyTheme(currentTheme);
+    applyLanguage(currentLanguage);
+
     // --- Actions ---
     function toggleLight(index, isOn) {
         if (!currentRoomId) return;
@@ -758,8 +1125,58 @@ document.addEventListener('DOMContentLoaded', () => {
         showView('statistics');
     });
 
+    if (navSettings) navSettings.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Settings clicked');
+        showView('settings');
+    });
+
     if (btnBackRooms) btnBackRooms.addEventListener('click', () => {
         showView('rooms');
+    });
+
+    // Settings buttons
+    const btnAddRoom = document.getElementById('btn-add-room');
+    const btnSaveSettings = document.getElementById('btn-save-settings');
+    const btnChangePassword = document.getElementById('btn-change-password');
+
+    if (btnAddRoom) btnAddRoom.addEventListener('click', () => {
+        const newRoomId = document.getElementById('new-room-id');
+        if (newRoomId) addRoom(newRoomId.value);
+    });
+
+    if (btnSaveSettings) btnSaveSettings.addEventListener('click', saveSettings);
+
+    if (btnChangePassword) btnChangePassword.addEventListener('click', () => {
+        const user = auth.currentUser;
+        if (user && user.email) {
+            auth.sendPasswordResetEmail(user.email)
+                .then(() => showToast('Email đổi mật khẩu đã được gửi!', 'success'))
+                .catch(err => showToast('Lỗi: ' + err.message, 'error'));
+        }
+    });
+
+    // Language selector
+    const languageSelect = document.getElementById('language-select');
+    if (languageSelect) {
+        languageSelect.value = currentLanguage;
+        languageSelect.addEventListener('change', (e) => {
+            applyLanguage(e.target.value);
+        });
+    }
+
+    // Theme toggle
+    const themeLight = document.getElementById('theme-light');
+    const themeDark = document.getElementById('theme-dark');
+    if (themeLight) themeLight.addEventListener('click', () => applyTheme('light'));
+    if (themeDark) themeDark.addEventListener('click', () => applyTheme('dark'));
+
+    // Add user button
+    const btnAddUser = document.getElementById('btn-add-user');
+    if (btnAddUser) btnAddUser.addEventListener('click', () => {
+        const email = document.getElementById('new-user-email');
+        const room = document.getElementById('new-user-room');
+        if (email && room) addUser(email.value, room.value);
     });
 
     if (masterOff) masterOff.addEventListener('click', turnAllOff);

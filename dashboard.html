@@ -428,6 +428,205 @@
                 </div>
             </div>
 
+            <!-- ==================== VIEW 5: SETTINGS ==================== -->
+            <div id="settings-view" style="display: none;">
+                <div class="settings-container">
+                    <!-- Profile Settings -->
+                    <div class="settings-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-user"></i> <span data-i18n="profile">Thông Tin
+                                Tài Khoản</span></h3>
+                        <div class="settings-content">
+                            <div class="profile-info">
+                                <div class="profile-avatar">
+                                    <i class="fa-solid fa-user-circle"></i>
+                                </div>
+                                <div class="profile-details">
+                                    <p class="profile-email" id="settings-email">--</p>
+                                    <p class="profile-role" id="settings-role">--</p>
+                                </div>
+                            </div>
+                            <button class="btn-settings danger" id="btn-change-password">
+                                <i class="fa-solid fa-key"></i> <span data-i18n="changePassword">Đổi Mật Khẩu</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Settings -->
+                    <div class="settings-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-palette"></i> <span data-i18n="appearance">Giao
+                                Diện</span></h3>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="language">Ngôn ngữ</span>
+                                    <span class="setting-desc" data-i18n="languageDesc">Chọn ngôn ngữ hiển thị</span>
+                                </div>
+                                <select id="language-select" class="settings-select">
+                                    <option value="vi">🇻🇳 Tiếng Việt</option>
+                                    <option value="en">🇺🇸 English</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="theme">Chế độ giao diện</span>
+                                    <span class="setting-desc" data-i18n="themeDesc">Sáng hoặc tối</span>
+                                </div>
+                                <div class="theme-toggle-group">
+                                    <button class="theme-btn active" id="theme-light" data-theme="light">
+                                        <i class="fa-solid fa-sun"></i>
+                                    </button>
+                                    <button class="theme-btn" id="theme-dark" data-theme="dark">
+                                        <i class="fa-solid fa-moon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="settings-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-bell"></i> <span
+                                data-i18n="notifications">Thông Báo</span></h3>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="tempAlert">Cảnh báo nhiệt độ cao</span>
+                                    <span class="setting-desc" data-i18n="tempAlertDesc">Thông báo khi nhiệt độ vượt
+                                        ngưỡng</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="notify-temp" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="humidityAlert">Cảnh báo độ ẩm cao</span>
+                                    <span class="setting-desc" data-i18n="humidityAlertDesc">Thông báo khi độ ẩm vượt
+                                        ngưỡng</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="notify-humidity" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="presenceAlert">Thông báo phát hiện
+                                        người</span>
+                                    <span class="setting-desc" data-i18n="presenceAlertDesc">Thông báo khi có người vào
+                                        phòng</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="notify-presence">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Room Management (Admin Only) -->
+                    <div class="settings-card admin-only" id="room-management-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-door-open"></i> <span
+                                data-i18n="roomManagement">Quản Lý Phòng Học</span></h3>
+                        <div class="settings-content">
+                            <div class="add-room-form">
+                                <input type="text" id="new-room-id" placeholder="Nhập mã phòng (vd: B405)"
+                                    class="settings-input">
+                                <button class="btn-settings primary" id="btn-add-room">
+                                    <i class="fa-solid fa-plus"></i> <span data-i18n="addRoom">Thêm Phòng</span>
+                                </button>
+                            </div>
+                            <div class="room-list-manage" id="room-list-manage">
+                                <!-- Rooms will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Management (Admin Only) -->
+                    <div class="settings-card admin-only" id="user-management-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-users-gear"></i> <span
+                                data-i18n="userManagement">Quản Lý Người Dùng</span></h3>
+                        <div class="settings-content">
+                            <div class="add-user-form">
+                                <input type="email" id="new-user-email" placeholder="Email người dùng"
+                                    class="settings-input">
+                                <select id="new-user-room" class="settings-select">
+                                    <option value="">Chọn phòng...</option>
+                                </select>
+                                <button class="btn-settings primary" id="btn-add-user">
+                                    <i class="fa-solid fa-user-plus"></i> <span data-i18n="addUser">Thêm</span>
+                                </button>
+                            </div>
+                            <div class="user-list-manage" id="user-list-manage">
+                                <!-- Users will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Settings -->
+                    <div class="settings-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-sliders"></i> <span
+                                data-i18n="systemSettings">Cài Đặt Hệ Thống</span></h3>
+                        <div class="settings-content">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="tempThreshold">Ngưỡng nhiệt độ cảnh báo</span>
+                                    <span class="setting-desc" data-i18n="tempThresholdDesc">Cảnh báo khi nhiệt độ vượt
+                                        ngưỡng</span>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" id="temp-threshold" value="35" min="20" max="50"
+                                        class="settings-input-small">
+                                    <span>°C</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="humidityThreshold">Ngưỡng độ ẩm cảnh
+                                        báo</span>
+                                    <span class="setting-desc" data-i18n="humidityThresholdDesc">Cảnh báo khi độ ẩm vượt
+                                        ngưỡng</span>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="number" id="humidity-threshold" value="80" min="30" max="100"
+                                        class="settings-input-small">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <span class="setting-name" data-i18n="autoOff">Tự động tắt thiết bị</span>
+                                    <span class="setting-desc" data-i18n="autoOffDesc">Tắt tất cả khi không có
+                                        người</span>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="auto-off-toggle" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <button class="btn-settings primary" id="btn-save-settings">
+                                <i class="fa-solid fa-save"></i> <span data-i18n="saveSettings">Lưu Cài Đặt</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- About -->
+                    <div class="settings-card">
+                        <h3 class="settings-title"><i class="fa-solid fa-info-circle"></i> <span data-i18n="about">Thông
+                                Tin</span></h3>
+                        <div class="settings-content">
+                            <div class="about-info">
+                                <p><strong>Smart Classroom Control</strong></p>
+                                <p>Phiên bản: 2.0.0</p>
+                                <p>Đại học Sư phạm Kỹ thuật TP.HCM</p>
+                                <p class="about-copyright">© 2026 HCMUTE. All rights reserved.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Toast Notification Container -->
             <div id="toast-container"></div>
         </main>
