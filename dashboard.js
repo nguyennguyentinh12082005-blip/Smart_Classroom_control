@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sensors
     const tempValue = document.getElementById('temp-value');
+    const humidityValue = document.getElementById('humidity-value');
     const presenceValue = document.getElementById('presence-value');
     const lightValValue = document.getElementById('light-val-value');
 
@@ -208,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. Sensors
         const sensorMap = {
             'NhietDo': tempValue,
+            'DoAm': humidityValue,
             'PhatHienNguoi': presenceValue,
             'AnhSang': lightValValue
         };
@@ -224,8 +226,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     presenceValue.textContent = hasMotion ? 'Có' : 'Không';
                     presenceValue.style.color = hasMotion ? '#00b894' : '#fab1a0';
                 } else {
-                    if (key === 'NhietDo') tempValue.textContent = val !== null ? val : '--';
-                    if (key === 'AnhSang') lightValValue.textContent = val !== null ? val : '--';
+                    if (key === 'NhietDo') {
+                        tempValue.textContent = val !== null ? val : '--';
+                        // Update circular progress (0-50°C range)
+                        const progress = Math.min(100, (val / 50) * 100);
+                        updateCircularProgress('temp-progress', progress);
+                    }
+                    if (key === 'DoAm') {
+                        humidityValue.textContent = val !== null ? val : '--';
+                        // Update circular progress (0-100% range)
+                        updateCircularProgress('humidity-progress', val || 0);
+                    }
+                    if (key === 'AnhSang') {
+                        lightValValue.textContent = val !== null ? val : '--';
+                        // Update circular progress (0-1000 Lux range)
+                        const progress = Math.min(100, (val / 1000) * 100);
+                        updateCircularProgress('light-progress', progress);
+                    }
                 }
             };
             ref.on('value', cb);
@@ -440,6 +457,14 @@ document.addEventListener('DOMContentLoaded', () => {
             icon.classList.add('spin-animation');
             const animSpeed = 2.2 - (state.fanSpeeds[index] / 100 * 2);
             icon.style.animationDuration = `${animSpeed}s`;
+        }
+    }
+
+    function updateCircularProgress(elementId, percent) {
+        const progressBar = document.getElementById(elementId);
+        if (progressBar) {
+            const value = Math.max(0, Math.min(100, percent));
+            progressBar.setAttribute('stroke-dasharray', `${value}, 100`);
         }
     }
 
