@@ -143,31 +143,44 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'dashboard':
                 adminDashboardView.style.display = 'block';
                 navDashboard.classList.add('active');
-                pageTitle.textContent = 'Dashboard';
+                pageTitle.textContent = getTranslation('navDashboard');
                 break;
             case 'rooms':
                 roomsView.style.display = 'block';
                 navRooms.classList.add('active');
-                pageTitle.textContent = 'Phòng Học';
+                pageTitle.textContent = getTranslation('navRooms');
                 break;
             case 'room-control':
                 roomControlView.style.display = 'block';
                 navRooms.classList.add('active');
-                pageTitle.textContent = 'Điều Khiển Phòng - ' + currentRoomId;
+                pageTitle.textContent = getTranslation('roomControl') + ' - ' + currentRoomId;
                 break;
             case 'statistics':
                 statisticsView.style.display = 'block';
                 navStatistics.classList.add('active');
-                pageTitle.textContent = 'Thống Kê';
+                pageTitle.textContent = getTranslation('navStatistics');
                 loadStatistics();
                 break;
             case 'settings':
                 if (settingsView) settingsView.style.display = 'block';
                 navSettings.classList.add('active');
-                pageTitle.textContent = 'Cài Đặt';
+                pageTitle.textContent = getTranslation('navSettings');
                 loadSettings();
                 break;
         }
+    }
+
+    // Translation helper - returns translation for current language
+    function getTranslation(key) {
+        const lang = localStorage.getItem('language') || 'vi';
+        const trans = {
+            navDashboard: lang === 'vi' ? 'Bảng điều khiển' : 'Dashboard',
+            navRooms: lang === 'vi' ? 'Phòng học' : 'Rooms',
+            navStatistics: lang === 'vi' ? 'Thống kê' : 'Statistics',
+            navSettings: lang === 'vi' ? 'Cài đặt' : 'Settings',
+            roomControl: lang === 'vi' ? 'Điều Khiển Phòng' : 'Room Control'
+        };
+        return trans[key] || key;
     }
 
     // --- Admin Data ---
@@ -754,6 +767,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const translations = {
         vi: {
+            // Navigation
+            navDashboard: 'Bảng điều khiển',
+            navRooms: 'Phòng học',
+            navStatistics: 'Thống kê',
+            navSettings: 'Cài đặt',
+            logout: 'Đăng xuất',
+            schoolName: 'ĐH Công nghệ Kỹ thuật TP.HCM',
+            pageSubtitle: 'Trường Đại học Công nghệ Kỹ thuật TP. Hồ Chí Minh',
+            searchPlaceholder: 'Tìm kiếm...',
+            connected: 'Đã kết nối',
+            loading: 'Đang tải...',
+
+            // Dashboard Overview
+            totalRooms: 'Tổng Phòng',
+            inUse: 'Đang Sử Dụng',
+            avgTemp: 'Nhiệt Độ TB (°C)',
+            avgHumidity: 'Độ Ẩm TB (%)',
+            roomStatus: 'Trạng Thái Phòng Học',
+            roomList: 'Danh Sách Phòng Học',
+
+            // Room Control
+            backToList: 'Quay lại danh sách',
+            temperature: 'Nhiệt Độ',
+            humidity: 'Độ Ẩm',
+            light: 'Ánh Sáng',
+            presence: 'Đang Sử Dụng',
+            autoMode: 'Chế độ tự động',
+            turnOnAll: 'Bật Tất Cả',
+            turnOffAll: 'Tắt Tất Cả',
+            lightSystem: 'Hệ Thống Đèn',
+            fanSystem: 'Hệ Thống Quạt',
+            light1: 'Đèn 1', light2: 'Đèn 2', light3: 'Đèn 3',
+            fan1: 'Quạt 1', fan2: 'Quạt 2', fan3: 'Quạt 3',
+            on: 'Đang Bật',
+            off: 'Đang Tắt',
+            fanSpeed: 'Tốc độ gió',
+            yes: 'Có',
+            no: 'Không',
+
+            // Statistics
+            tempByRoom: 'Nhiệt Độ Theo Phòng',
+            humidityByRoom: 'Độ Ẩm Theo Phòng',
+            lightByRoom: 'Ánh Sáng Theo Phòng (Lux)',
+            roomUsage: 'Tình Trạng Sử Dụng Phòng',
+
+            // Settings
             profile: 'Thông Tin Tài Khoản',
             changePassword: 'Đổi Mật Khẩu',
             appearance: 'Giao Diện',
@@ -783,9 +842,67 @@ document.addEventListener('DOMContentLoaded', () => {
             about: 'Thông Tin',
             settingsSaved: 'Đã lưu cài đặt',
             userAdded: 'Đã thêm người dùng',
-            userDeleted: 'Đã xóa người dùng'
+            userDeleted: 'Đã xóa người dùng',
+            admin: 'Quản trị viên',
+            user: 'Người dùng',
+            selectRoom: 'Chọn phòng...',
+            noRooms: 'Chưa có phòng nào.',
+            noUsers: 'Chưa có người dùng nào.',
+            confirmDeleteRoom: 'Bạn có chắc muốn xóa phòng',
+            confirmDeleteUser: 'Bạn có chắc muốn xóa người dùng này?',
+            roomAdded: 'Đã thêm phòng',
+            roomDeleted: 'Đã xóa phòng',
+            enterRoomId: 'Vui lòng nhập mã phòng',
+            enterEmailRoom: 'Vui lòng nhập email và chọn phòng',
+            passwordResetSent: 'Email đổi mật khẩu đã được gửi!'
         },
         en: {
+            // Navigation
+            navDashboard: 'Dashboard',
+            navRooms: 'Rooms',
+            navStatistics: 'Statistics',
+            navSettings: 'Settings',
+            logout: 'Logout',
+            schoolName: 'HCMC University of Technology and Education',
+            pageSubtitle: 'Ho Chi Minh City University of Technology and Education',
+            searchPlaceholder: 'Search...',
+            connected: 'Connected',
+            loading: 'Loading...',
+
+            // Dashboard Overview
+            totalRooms: 'Total Rooms',
+            inUse: 'In Use',
+            avgTemp: 'Avg Temp (°C)',
+            avgHumidity: 'Avg Humidity (%)',
+            roomStatus: 'Room Status',
+            roomList: 'Room List',
+
+            // Room Control
+            backToList: 'Back to list',
+            temperature: 'Temperature',
+            humidity: 'Humidity',
+            light: 'Light',
+            presence: 'In Use',
+            autoMode: 'Auto mode',
+            turnOnAll: 'Turn On All',
+            turnOffAll: 'Turn Off All',
+            lightSystem: 'Lighting System',
+            fanSystem: 'Fan System',
+            light1: 'Light 1', light2: 'Light 2', light3: 'Light 3',
+            fan1: 'Fan 1', fan2: 'Fan 2', fan3: 'Fan 3',
+            on: 'On',
+            off: 'Off',
+            fanSpeed: 'Fan speed',
+            yes: 'Yes',
+            no: 'No',
+
+            // Statistics
+            tempByRoom: 'Temperature by Room',
+            humidityByRoom: 'Humidity by Room',
+            lightByRoom: 'Light by Room (Lux)',
+            roomUsage: 'Room Usage Status',
+
+            // Settings
             profile: 'Account Information',
             changePassword: 'Change Password',
             appearance: 'Appearance',
@@ -815,13 +932,27 @@ document.addEventListener('DOMContentLoaded', () => {
             about: 'About',
             settingsSaved: 'Settings saved',
             userAdded: 'User added',
-            userDeleted: 'User deleted'
+            userDeleted: 'User deleted',
+            admin: 'Administrator',
+            user: 'User',
+            selectRoom: 'Select room...',
+            noRooms: 'No rooms found.',
+            noUsers: 'No users found.',
+            confirmDeleteRoom: 'Are you sure you want to delete room',
+            confirmDeleteUser: 'Are you sure you want to delete this user?',
+            roomAdded: 'Room added',
+            roomDeleted: 'Room deleted',
+            enterRoomId: 'Please enter room ID',
+            enterEmailRoom: 'Please enter email and select room',
+            passwordResetSent: 'Password reset email sent!'
         }
     };
 
     function applyLanguage(lang) {
         currentLanguage = lang;
         localStorage.setItem('language', lang);
+
+        // Update all elements with data-i18n attribute
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (translations[lang] && translations[lang][key]) {
@@ -829,8 +960,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        // Update placeholders
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (translations[lang] && translations[lang][key]) {
+                el.placeholder = translations[lang][key];
+            }
+        });
+
         const languageSelect = document.getElementById('language-select');
         if (languageSelect) languageSelect.value = lang;
+
+        // Update page title based on current view
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            const currentTitle = pageTitle.textContent.toLowerCase();
+            if (currentTitle.includes('dashboard') || currentTitle.includes('bảng') || currentTitle.includes('điều khiển'))
+                pageTitle.textContent = translations[lang].navDashboard;
+            else if (currentTitle.includes('phòng') || currentTitle.includes('room'))
+                pageTitle.textContent = translations[lang].navRooms;
+            else if (currentTitle.includes('thống') || currentTitle.includes('statistic'))
+                pageTitle.textContent = translations[lang].navStatistics;
+            else if (currentTitle.includes('cài') || currentTitle.includes('setting'))
+                pageTitle.textContent = translations[lang].navSettings;
+        }
     }
 
     // --- Theme ---

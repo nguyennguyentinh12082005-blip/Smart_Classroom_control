@@ -29,30 +29,30 @@
             <nav class="sidebar-nav">
                 <a href="#" class="nav-item active" id="nav-dashboard">
                     <i class="fa-solid fa-house"></i>
-                    <span>Dashboard</span>
+                    <span data-i18n="navDashboard">Dashboard</span>
                 </a>
                 <a href="#" class="nav-item" id="nav-rooms">
                     <i class="fa-solid fa-door-open"></i>
-                    <span>Phòng học</span>
+                    <span data-i18n="navRooms">Phòng học</span>
                 </a>
                 <a href="#" class="nav-item" id="nav-statistics">
                     <i class="fa-solid fa-chart-line"></i>
-                    <span>Thống kê</span>
+                    <span data-i18n="navStatistics">Thống kê</span>
                 </a>
                 <a href="#" class="nav-item" id="nav-settings">
                     <i class="fa-solid fa-gear"></i>
-                    <span>Cài đặt</span>
+                    <span data-i18n="navSettings">Cài đặt</span>
                 </a>
             </nav>
 
             <div class="sidebar-footer">
                 <div class="school-info">
                     <i class="fa-solid fa-building-columns"></i>
-                    <span>ĐH Công nghệ Kỹ thuật TP.HCM</span>
+                    <span data-i18n="schoolName">ĐH Công nghệ Kỹ thuật TP.HCM</span>
                 </div>
                 <button id="logout-btn" class="nav-item logout">
                     <i class="fa-solid fa-right-from-bracket"></i>
-                    <span>Đăng xuất</span>
+                    <span data-i18n="logout">Đăng xuất</span>
                 </button>
             </div>
         </aside>
@@ -63,16 +63,13 @@
             <header class="main-header">
                 <div class="header-left">
                     <h1 class="page-title" id="page-title">Dashboard</h1>
-                    <p class="page-subtitle">Trường Đại học Công nghệ Kỹ thuật TP. Hồ Chí Minh</p>
+                    <p class="page-subtitle" data-i18n="pageSubtitle">Trường Đại học Công nghệ Kỹ thuật TP. Hồ Chí Minh
+                    </p>
                 </div>
                 <div class="header-right">
-                    <div class="search-box">
-                        <i class="fa-solid fa-search"></i>
-                        <input type="text" placeholder="Tìm kiếm...">
-                    </div>
                     <div class="status-badge" id="connection-status">
                         <div class="status-dot"></div>
-                        <span>Đã kết nối</span>
+                        <span data-i18n="connected">Đã kết nối</span>
                     </div>
                     <div class="current-room-badge">
                         <i class="fa-solid fa-user"></i>
@@ -91,7 +88,7 @@
                         </div>
                         <div class="overview-info">
                             <span class="overview-value" id="total-rooms">0</span>
-                            <span class="overview-label">Tổng Phòng</span>
+                            <span class="overview-label" data-i18n="totalRooms">Tổng Phòng</span>
                         </div>
                     </div>
                     <div class="overview-card">
@@ -100,7 +97,7 @@
                         </div>
                         <div class="overview-info">
                             <span class="overview-value" id="active-rooms">0</span>
-                            <span class="overview-label">Đang Sử Dụng</span>
+                            <span class="overview-label" data-i18n="inUse">Đang Sử Dụng</span>
                         </div>
                     </div>
                     <div class="overview-card">
@@ -109,7 +106,7 @@
                         </div>
                         <div class="overview-info">
                             <span class="overview-value" id="avg-temp">--</span>
-                            <span class="overview-label">Nhiệt Độ TB (°C)</span>
+                            <span class="overview-label" data-i18n="avgTemp">Nhiệt Độ TB (°C)</span>
                         </div>
                     </div>
                     <div class="overview-card">
@@ -118,23 +115,23 @@
                         </div>
                         <div class="overview-info">
                             <span class="overview-value" id="avg-humidity">--</span>
-                            <span class="overview-label">Độ Ẩm TB (%)</span>
+                            <span class="overview-label" data-i18n="avgHumidity">Độ Ẩm TB (%)</span>
                         </div>
                     </div>
                 </section>
 
                 <!-- Quick Room Status -->
                 <section class="quick-status">
-                    <h3 class="section-title">Trạng Thái Phòng Học</h3>
+                    <h3 class="section-title" data-i18n="roomStatus">Trạng Thái Phòng Học</h3>
                     <div class="room-status-grid" id="room-status-grid">
-                        <p style="color: #7F8C8D;">Đang tải...</p>
+                        <p style="color: #7F8C8D;" data-i18n="loading">Đang tải...</p>
                     </div>
                 </section>
             </div>
 
             <!-- ==================== VIEW 2: ROOMS LIST ==================== -->
             <div id="rooms-view" style="display: none;">
-                <h3 class="section-title">Danh Sách Phòng Học</h3>
+                <h3 class="section-title" data-i18n="roomList">Danh Sách Phòng Học</h3>
                 <div class="room-grid" id="room-list">
                     <div class="room-card-skeleton">
                         <p>Đang tải...</p>
@@ -146,7 +143,7 @@
             <div id="room-control-view" style="display: none;">
                 <!-- Back Button -->
                 <button id="btn-back-rooms" class="btn-back">
-                    <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
+                    <i class="fa-solid fa-arrow-left"></i> <span data-i18n="backToList">Quay lại danh sách</span>
                 </button>
 
                 <!-- STATS CARDS -->
@@ -156,7 +153,7 @@
                             <i class="fa-solid fa-temperature-half"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">Nhiệt Độ</span>
+                            <span class="stat-label" data-i18n="temperature">Nhiệt Độ</span>
                             <div class="stat-value-wrapper">
                                 <span class="stat-value" id="temp-value">--</span>
                                 <span class="stat-unit">°C</span>
@@ -177,7 +174,7 @@
                             <i class="fa-solid fa-droplet"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">Độ Ẩm</span>
+                            <span class="stat-label" data-i18n="humidity">Độ Ẩm</span>
                             <div class="stat-value-wrapper">
                                 <span class="stat-value" id="humidity-value">--</span>
                                 <span class="stat-unit">%</span>
@@ -198,7 +195,7 @@
                             <i class="fa-solid fa-sun"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">Ánh Sáng</span>
+                            <span class="stat-label" data-i18n="light">Ánh Sáng</span>
                             <div class="stat-value-wrapper">
                                 <span class="stat-value" id="light-val-value">--</span>
                                 <span class="stat-unit">Lux</span>
@@ -219,7 +216,7 @@
                             <i class="fa-solid fa-person-walking"></i>
                         </div>
                         <div class="stat-info">
-                            <span class="stat-label">Đang Sử Dụng</span>
+                            <span class="stat-label" data-i18n="presence">Đang Sử Dụng</span>
                             <div class="stat-value-wrapper">
                                 <span class="stat-value presence-text" id="presence-value">--</span>
                             </div>
@@ -232,7 +229,7 @@
                     <!-- Auto Mode & Master Controls -->
                     <div class="master-control-bar">
                         <div class="auto-mode-toggle">
-                            <span>Chế độ tự động</span>
+                            <span data-i18n="autoMode">Chế độ tự động</span>
                             <label class="switch">
                                 <input type="checkbox" id="auto-mode-toggle">
                                 <span class="slider"></span>
@@ -240,10 +237,10 @@
                         </div>
                         <div class="master-buttons">
                             <button class="btn-master on" id="master-on">
-                                <i class="fa-solid fa-power-off"></i> Bật Tất Cả
+                                <i class="fa-solid fa-power-off"></i> <span data-i18n="turnOnAll">Bật Tất Cả</span>
                             </button>
                             <button class="btn-master off" id="master-off">
-                                <i class="fa-solid fa-power-off"></i> Tắt Tất Cả
+                                <i class="fa-solid fa-power-off"></i> <span data-i18n="turnOffAll">Tắt Tất Cả</span>
                             </button>
                         </div>
                     </div>
@@ -252,7 +249,8 @@
                     <div class="devices-grid">
                         <!-- LIGHTS -->
                         <div class="device-group">
-                            <h3 class="group-title"><i class="fa-solid fa-lightbulb"></i> Hệ Thống Đèn</h3>
+                            <h3 class="group-title"><i class="fa-solid fa-lightbulb"></i> <span
+                                    data-i18n="lightSystem">Hệ Thống Đèn</span></h3>
                             <div class="device-cards">
                                 <!-- Light 1 -->
                                 <div class="device-card" id="card-light-1">
@@ -309,7 +307,8 @@
 
                         <!-- FANS -->
                         <div class="device-group">
-                            <h3 class="group-title"><i class="fa-solid fa-fan"></i> Hệ Thống Quạt</h3>
+                            <h3 class="group-title"><i class="fa-solid fa-fan"></i> <span data-i18n="fanSystem">Hệ Thống
+                                    Quạt</span></h3>
                             <div class="device-cards">
                                 <!-- Fan 1 -->
                                 <div class="device-card" id="card-fan-1">
@@ -396,7 +395,8 @@
                 <div class="stats-charts-grid">
                     <!-- Temperature Chart -->
                     <div class="chart-card">
-                        <h3 class="chart-title"><i class="fa-solid fa-temperature-half"></i> Nhiệt Độ Theo Phòng</h3>
+                        <h3 class="chart-title"><i class="fa-solid fa-temperature-half"></i> <span
+                                data-i18n="tempByRoom">Nhiệt Độ Theo Phòng</span></h3>
                         <div class="chart-container">
                             <canvas id="tempChart"></canvas>
                         </div>
@@ -404,7 +404,8 @@
 
                     <!-- Humidity Chart -->
                     <div class="chart-card">
-                        <h3 class="chart-title"><i class="fa-solid fa-droplet"></i> Độ Ẩm Theo Phòng</h3>
+                        <h3 class="chart-title"><i class="fa-solid fa-droplet"></i> <span data-i18n="humidityByRoom">Độ
+                                Ẩm Theo Phòng</span></h3>
                         <div class="chart-container">
                             <canvas id="humidityChart"></canvas>
                         </div>
@@ -412,7 +413,8 @@
 
                     <!-- Light Chart -->
                     <div class="chart-card">
-                        <h3 class="chart-title"><i class="fa-solid fa-sun"></i> Ánh Sáng Theo Phòng (Lux)</h3>
+                        <h3 class="chart-title"><i class="fa-solid fa-sun"></i> <span data-i18n="lightByRoom">Ánh Sáng
+                                Theo Phòng (Lux)</span></h3>
                         <div class="chart-container">
                             <canvas id="lightChart"></canvas>
                         </div>
@@ -420,7 +422,8 @@
 
                     <!-- Usage Chart -->
                     <div class="chart-card">
-                        <h3 class="chart-title"><i class="fa-solid fa-clock"></i> Tình Trạng Sử Dụng Phòng</h3>
+                        <h3 class="chart-title"><i class="fa-solid fa-clock"></i> <span data-i18n="roomUsage">Tình Trạng
+                                Sử Dụng Phòng</span></h3>
                         <div class="chart-container">
                             <canvas id="usageChart"></canvas>
                         </div>
