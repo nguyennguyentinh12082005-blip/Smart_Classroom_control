@@ -445,111 +445,136 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Statistics ---
     function loadStatistics() {
-        const roomKeys = Object.keys(roomsData);
-        const labels = roomKeys;
-        const temps = [];
-        const humidities = [];
-        const lights = [];
-        const usageData = [];
+        // Fetch rooms data directly from Firebase
+        db.ref('Rooms').once('value').then(snapshot => {
+            const rooms = snapshot.val() || {};
+            const roomKeys = Object.keys(rooms);
 
-        roomKeys.forEach(roomId => {
-            const room = roomsData[roomId];
-            temps.push(room.NhietDo || 0);
-            humidities.push(room.DoAm || 0);
-            lights.push(room.AnhSang || 0);
-            usageData.push(room.PhatHienNguoi == 1 || room.PhatHienNguoi === true ? 1 : 0);
-        });
-
-        // Destroy existing charts
-        if (tempChart) tempChart.destroy();
-        if (humidityChart) humidityChart.destroy();
-        if (lightChart) lightChart.destroy();
-        if (usageChart) usageChart.destroy();
-
-        // Temperature Chart
-        const tempCtx = document.getElementById('tempChart').getContext('2d');
-        tempChart = new Chart(tempCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Nhiệt Độ (°C)',
-                    data: temps,
-                    backgroundColor: 'rgba(231, 76, 60, 0.7)',
-                    borderColor: '#E74C3C',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, max: 50 } }
-            }
-        });
-
-        // Humidity Chart
-        const humidityCtx = document.getElementById('humidityChart').getContext('2d');
-        humidityChart = new Chart(humidityCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Độ Ẩm (%)',
-                    data: humidities,
-                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
-                    borderColor: '#3498DB',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, max: 100 } }
-            }
-        });
-
-        // Light Chart
-        const lightCtx = document.getElementById('lightChart').getContext('2d');
-        lightChart = new Chart(lightCtx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Ánh Sáng (Lux)',
-                    data: lights,
-                    backgroundColor: 'rgba(241, 196, 15, 0.7)',
-                    borderColor: '#F1C40F',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
-            }
-        });
-
-        // Usage Chart (Pie)
-        const usageCtx = document.getElementById('usageChart').getContext('2d');
-        const activeCount = usageData.filter(v => v === 1).length;
-        const inactiveCount = usageData.length - activeCount;
-        usageChart = new Chart(usageCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Đang Sử Dụng', 'Trống'],
-                datasets: [{
-                    data: [activeCount, inactiveCount],
-                    backgroundColor: ['#27AE60', '#BDC3C7'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+            if (roomKeys.length === 0) {
+                // No data available
+                const container = document.querySelector('.stats-charts-grid');
+                if (container) {
+                    container.innerHTML = '<p style="color: #7F8C8D; padding: 20px;">Chưa có dữ liệu phòng để thống kê.</p>';
                 }
+                return;
             }
+
+            const labels = roomKeys;
+            const temps = [];
+            const humidities = [];
+            const lights = [];
+            const usageData = [];
+
+            roomKeys.forEach(roomId => {
+                const room = rooms[roomId];
+                temps.push(room.NhietDo || 0);
+                humidities.push(room.DoAm || 0);
+                lights.push(room.AnhSang || 0);
+                usageData.push(room.PhatHienNguoi == 1 || room.PhatHienNguoi === true ? 1 : 0);
+            });
+
+            // Destroy existing charts
+            if (tempChart) tempChart.destroy();
+            if (humidityChart) humidityChart.destroy();
+            if (lightChart) lightChart.destroy();
+            if (usageChart) usageChart.destroy();
+
+            // Temperature Chart
+            const tempCtx = document.getElementById('tempChart');
+            if (tempCtx) {
+                tempChart = new Chart(tempCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Nhiệt Độ (°C)',
+                            data: temps,
+                            backgroundColor: 'rgba(231, 76, 60, 0.7)',
+                            borderColor: '#E74C3C',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, max: 50 } }
+                    }
+                });
+            }
+
+            // Humidity Chart
+            const humidityCtx = document.getElementById('humidityChart');
+            if (humidityCtx) {
+                humidityChart = new Chart(humidityCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Độ Ẩm (%)',
+                            data: humidities,
+                            backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                            borderColor: '#3498DB',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, max: 100 } }
+                    }
+                });
+            }
+
+            // Light Chart
+            const lightCtx = document.getElementById('lightChart');
+            if (lightCtx) {
+                lightChart = new Chart(lightCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Ánh Sáng (Lux)',
+                            data: lights,
+                            backgroundColor: 'rgba(241, 196, 15, 0.7)',
+                            borderColor: '#F1C40F',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Usage Chart (Pie)
+            const usageCtx = document.getElementById('usageChart');
+            if (usageCtx) {
+                const activeCount = usageData.filter(v => v === 1).length;
+                const inactiveCount = usageData.length - activeCount;
+                usageChart = new Chart(usageCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Đang Sử Dụng', 'Trống'],
+                        datasets: [{
+                            data: [activeCount, inactiveCount],
+                            backgroundColor: ['#27AE60', '#BDC3C7'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        }).catch(err => {
+            console.error('Error loading statistics:', err);
+            showToast('Lỗi tải thống kê: ' + err.message, 'error');
         });
     }
 
