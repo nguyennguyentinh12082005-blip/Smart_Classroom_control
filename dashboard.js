@@ -55,8 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // State
     let state = {
         lights: [false, false, false],
-        fans: [false, false, false],
-        fanSpeeds: [50, 50, 50]
+        fans: [false, false, false]
     };
     let currentUserRole = null;
     let currentRoomId = null;
@@ -68,6 +67,44 @@ document.addEventListener('DOMContentLoaded', () => {
     let humidityChart = null;
     let lightChart = null;
     let usageChart = null;
+
+    // --- Toast Notification ---
+    function showToast(message, type = 'info') {
+        // Create toast element
+        let toast = document.getElementById('toast-notification');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 500;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            document.body.appendChild(toast);
+        }
+
+        // Set color based on type
+        const colors = {
+            success: '#27AE60',
+            error: '#E74C3C',
+            info: '#3498DB'
+        };
+        toast.style.backgroundColor = colors[type] || colors.info;
+        toast.textContent = message;
+        toast.style.opacity = '1';
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+        }, 3000);
+    }
 
     // --- Auth Check ---
     auth.onAuthStateChanged((user) => {
@@ -369,9 +406,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!el) return;
 
                 if (key === 'PhatHienNguoi') {
+                    console.log('[DEBUG] PhatHienNguoi value from Firebase:', val, 'Type:', typeof val);
+                    console.log('[DEBUG] presenceValue element:', presenceValue);
                     const hasMotion = val == 1 || val === true || val === '1' || val === 'motion';
-                    presenceValue.textContent = hasMotion ? 'Có' : 'Không';
-                    presenceValue.style.color = hasMotion ? '#27AE60' : '#E74C3C';
+                    console.log('[DEBUG] hasMotion calculated:', hasMotion);
+                    if (presenceValue) {
+                        presenceValue.textContent = hasMotion ? 'Có' : 'Không';
+                        presenceValue.style.color = hasMotion ? '#27AE60' : '#E74C3C';
+                        console.log('[DEBUG] Updated presenceValue.textContent to:', presenceValue.textContent);
+                    } else {
+                        console.error('[DEBUG] presenceValue element is NULL!');
+                    }
                 } else {
                     if (key === 'NhietDo') {
                         tempValue.textContent = val !== null ? val : '--';
@@ -418,27 +463,10 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             fanRef.on('value', fanCb);
             activeListeners.push({ ref: fanRef, event: 'value', callback: fanCb });
-
-            // Fan Speed
-            const speedRef = db.ref(`${basePath}/TocDoQuat${i}`);
-            const speedCb = (snap) => {
-                const val = snap.val();
-                if (val !== null) {
-                    state.fanSpeeds[i] = parseInt(val);
-                    const slider = document.getElementById(`fan-speed-${i}`);
-                    if (slider) slider.value = state.fanSpeeds[i];
-                    const label = document.getElementById(`fan-speed-value-${i}`);
-                    if (label) label.textContent = `${state.fanSpeeds[i]}%`;
-                    updateFanAnimation(i);
-                }
-            };
-            speedRef.on('value', speedCb);
-            activeListeners.push({ ref: speedRef, event: 'value', callback: speedCb });
         }
 
-        // Auto Mode
+        // Auto Mode - just listen, don't force to true
         const autoModeRef = db.ref(`${basePath}/CheDoTuDong`);
-        autoModeRef.set(true).catch(e => console.error("Auto Force Error", e));
 
         const autoModeCb = (snap) => {
             const isAuto = snap.val() === true;
@@ -464,6 +492,56 @@ document.addEventListener('DOMContentLoaded', () => {
     function detachListeners() {
         activeListeners.forEach(l => l.ref.off(l.event, l.callback));
         activeListeners = [];
+    }
+
+    // --- Device Control Functions ---
+    function toggleLight(index, isOn) {
+        if (!currentRoomId) return;
+        const val = isOn ? 1 : 0;
+        db.ref(`Rooms/${currentRoomId}/Den${index}`).set(val)
+            .catch(err => {
+                console.error('Error toggling light:', err);
+                showToast(`Lỗi bật/tắt đèn: ${err.message}`, 'error');
+            });
+    }
+
+    function toggleFan(index, isOn) {
+        if (!currentRoomId) return;
+        const val = isOn ? 1 : 0;
+        db.ref(`Rooms/${currentRoomId}/Quat${index}`).set(val)
+            .catch(err => {
+                console.error('Error toggling fan:', err);
+                showToast(`Lỗi bật/tắt quạt: ${err.message}`, 'error');
+            });
+    }
+
+
+    function turnAllOn() {
+        if (!currentRoomId) return;
+        const updates = {};
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            updates[`Den${i}`] = 1;
+            updates[`Quat${i}`] = 1;
+        }
+        db.ref(`Rooms/${currentRoomId}`).update(updates)
+            .catch(err => {
+                console.error('Error turning all on:', err);
+                showToast(`Lỗi bật tất cả: ${err.message}`, 'error');
+            });
+    }
+
+    function turnAllOff() {
+        if (!currentRoomId) return;
+        const updates = {};
+        for (let i = 1; i <= DEVICE_COUNT; i++) {
+            updates[`Den${i}`] = 0;
+            updates[`Quat${i}`] = 0;
+        }
+        db.ref(`Rooms/${currentRoomId}`).update(updates)
+            .catch(err => {
+                console.error('Error turning all off:', err);
+                showToast(`Lỗi tắt tất cả: ${err.message}`, 'error');
+            });
     }
 
     // --- Statistics ---
@@ -1350,14 +1428,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const fToggle = document.getElementById(`fan-toggle-${i}`);
         if (fToggle) fToggle.addEventListener('change', (e) => toggleFan(i, e.target.checked));
-
-        const fSpeed = document.getElementById(`fan-speed-${i}`);
-        if (fSpeed) {
-            fSpeed.addEventListener('change', (e) => setFanSpeed(i, e.target.value));
-            fSpeed.addEventListener('input', (e) => {
-                const lbl = document.getElementById(`fan-speed-value-${i}`);
-                if (lbl) lbl.textContent = `${e.target.value}%`;
-            });
-        }
     }
 });
