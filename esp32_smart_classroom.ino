@@ -18,7 +18,7 @@
 #define FIREBASE_AUTH "VexXIyCwYsU0IsvFTx97SLAtjvgfuw66YiJSr0Uu"
 
 // ================= FIREBASE PATH =================
-static const char* ROOM_PATH = "/Rooms/A101";
+static const char* ROOM_PATH = "Rooms/A101";
 
 // ================= PINS =================
 #define PIR_PIN     21
@@ -180,6 +180,16 @@ void firebaseTask(void *pv) {
 
   for (;;) {
     vTaskDelay(pdMS_TO_TICKS(80));
+
+    // Debug connection status every 5 seconds
+    static uint32_t lastStatus = 0;
+    if (millis() - lastStatus >= 5000) {
+      lastStatus = millis();
+      Serial.print("[FB][STATUS] WiFi=");
+      Serial.print(WiFi.status() == WL_CONNECTED ? "OK" : "DISCONNECTED");
+      Serial.print(" Firebase=");
+      Serial.println(Firebase.ready() ? "READY" : "NOT_READY");
+    }
 
     if (WiFi.status() != WL_CONNECTED) continue;
     if (!Firebase.ready()) continue;
