@@ -37,6 +37,10 @@ int PIN_QUAT3 = 5;
 // ================= CONFIG =================
 static const bool RELAY_ACTIVE_LOW = false;
 
+// PIR sensor type: set to true if your PIR outputs LOW when motion detected
+// Nếu PIR luôn = 1 dù không có người, thử đổi thành true
+static const bool PIR_ACTIVE_LOW = false;
+
 // ================= OBJECTS =================
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -204,6 +208,15 @@ void firebaseTask(void *pv) {
         g_cmdQuat1=q1; g_cmdQuat2=q2; g_cmdQuat3=q3;
         xSemaphoreGive(gMutex);
       }
+      
+      // Debug: Print commands received from Firebase
+      Serial.print("[FB][CMD] Auto="); Serial.print(autoModeLocal);
+      Serial.print(" D1="); Serial.print(d1);
+      Serial.print(" D2="); Serial.print(d2);
+      Serial.print(" D3="); Serial.print(d3);
+      Serial.print(" Q1="); Serial.print(q1);
+      Serial.print(" Q2="); Serial.print(q2);
+      Serial.print(" Q3="); Serial.println(q3);
     }
 
     // ===== SEND sensors =====
@@ -290,6 +303,12 @@ void loop() {
   static uint32_t pirChangeAt=0;
 
   int pirRaw = digitalRead(PIR_PIN);
+  
+  // Invert if using Active LOW PIR sensor
+  if (PIR_ACTIVE_LOW) {
+    pirRaw = !pirRaw;
+  }
+  
   if (millis() < PIR_WARMUP_MS) pirRaw = 0;
 
   if (pirRaw != pirRawLast) { pirRawLast=pirRaw; pirChangeAt=now; }
