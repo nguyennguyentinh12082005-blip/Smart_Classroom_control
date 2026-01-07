@@ -118,11 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             NhietDo: 0,
                             DoAm: 0,
                             AnhSang: 0,
-                            PhatHienNguoi: 0,
-                            Den1: 0, Den2: 0, Den3: 0,
-                            Quat1: 0, Quat2: 0, Quat3: 0,
-                            TocDoQuat1: 0, TocDoQuat2: 0, TocDoQuat3: 0,
-                            CheDoTuDong: true // Default Auto Mode ON
+                            ChuyenDong: 0,
+                            'CMD/Den1': 0, 'CMD/Den2': 0, 'CMD/Den3': 0,
+                            'CMD/Quat1': 0, 'CMD/Quat2': 0, 'CMD/Quat3': 0,
+                            AutoMode: true // Default Auto Mode ON
                         };
                         db.ref('Rooms/' + roomId).update(initData);
                     }

@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const room = roomsData[roomId];
 
             // Check presence
-            const presence = room.PhatHienNguoi;
+            const presence = room.ChuyenDong;
             if (presence == 1 || presence === true || presence === '1') {
                 activeRooms++;
             }
@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         roomKeys.forEach(roomId => {
             const room = roomsData[roomId];
-            const isActive = room.PhatHienNguoi == 1 || room.PhatHienNguoi === true;
+            const isActive = room.ChuyenDong == 1 || room.ChuyenDong === true;
 
             const card = document.createElement('div');
             card.className = `room-status-card ${isActive ? 'active' : ''}`;
@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         roomKeys.forEach(roomId => {
             const room = roomsData[roomId];
-            const isActive = room.PhatHienNguoi == 1 || room.PhatHienNguoi === true;
+            const isActive = room.ChuyenDong == 1 || room.ChuyenDong === true;
 
             const card = document.createElement('div');
             card.className = 'room-card';
@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const sensorMap = {
             'NhietDo': tempValue,
             'DoAm': humidityValue,
-            'PhatHienNguoi': presenceValue,
+            'ChuyenDong': presenceValue,
             'AnhSang': lightValValue
         };
 
@@ -405,8 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const el = sensorMap[key];
                 if (!el) return;
 
-                if (key === 'PhatHienNguoi') {
-                    console.log('[DEBUG] PhatHienNguoi value from Firebase:', val, 'Type:', typeof val);
+                if (key === 'ChuyenDong') {
+                    console.log('[DEBUG] ChuyenDong value from Firebase:', val, 'Type:', typeof val);
                     console.log('[DEBUG] presenceValue element:', presenceValue);
                     const hasMotion = val == 1 || val === true || val === '1' || val === 'motion';
                     console.log('[DEBUG] hasMotion calculated:', hasMotion);
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Devices
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             // Lights
-            const lightRef = db.ref(`${basePath}/Den${i}`);
+            const lightRef = db.ref(`${basePath}/CMD/Den${i}`);
             const lightCb = (snap) => {
                 const isOn = snap.val() == 1 || snap.val() === true;
                 state.lights[i] = isOn;
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeListeners.push({ ref: lightRef, event: 'value', callback: lightCb });
 
             // Fans
-            const fanRef = db.ref(`${basePath}/Quat${i}`);
+            const fanRef = db.ref(`${basePath}/CMD/Quat${i}`);
             const fanCb = (snap) => {
                 const isOn = snap.val() == 1 || snap.val() === true;
                 state.fans[i] = isOn;
@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Auto Mode - just listen, don't force to true
-        const autoModeRef = db.ref(`${basePath}/CheDoTuDong`);
+        const autoModeRef = db.ref(`${basePath}/AutoMode`);
 
         const autoModeCb = (snap) => {
             const isAuto = snap.val() === true;
@@ -498,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleLight(index, isOn) {
         if (!currentRoomId) return;
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/Den${index}`).set(val)
+        db.ref(`Rooms/${currentRoomId}/CMD/Den${index}`).set(val)
             .catch(err => {
                 console.error('Error toggling light:', err);
                 showToast(`Lỗi bật/tắt đèn: ${err.message}`, 'error');
@@ -508,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleFan(index, isOn) {
         if (!currentRoomId) return;
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/Quat${index}`).set(val)
+        db.ref(`Rooms/${currentRoomId}/CMD/Quat${index}`).set(val)
             .catch(err => {
                 console.error('Error toggling fan:', err);
                 showToast(`Lỗi bật/tắt quạt: ${err.message}`, 'error');
@@ -520,8 +520,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentRoomId) return;
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Den${i}`] = 1;
-            updates[`Quat${i}`] = 1;
+            updates[`CMD/Den${i}`] = 1;
+            updates[`CMD/Quat${i}`] = 1;
         }
         db.ref(`Rooms/${currentRoomId}`).update(updates)
             .catch(err => {
@@ -534,8 +534,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentRoomId) return;
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Den${i}`] = 0;
-            updates[`Quat${i}`] = 0;
+            updates[`CMD/Den${i}`] = 0;
+            updates[`CMD/Quat${i}`] = 0;
         }
         db.ref(`Rooms/${currentRoomId}`).update(updates)
             .catch(err => {
@@ -571,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 temps.push(room.NhietDo || 0);
                 humidities.push(room.DoAm || 0);
                 lights.push(room.AnhSang || 0);
-                usageData.push(room.PhatHienNguoi == 1 || room.PhatHienNguoi === true ? 1 : 0);
+                usageData.push(room.ChuyenDong == 1 || room.ChuyenDong === true ? 1 : 0);
             });
 
             // Destroy existing charts
@@ -1417,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         autoModeToggle.addEventListener('change', (e) => {
             if (!currentRoomId) return;
             const isAuto = e.target.checked;
-            db.ref(`Rooms/${currentRoomId}/CheDoTuDong`).set(isAuto)
+            db.ref(`Rooms/${currentRoomId}/AutoMode`).set(isAuto)
                 .catch(err => showToast(`Lỗi: ` + err.message, 'error'));
         });
     }
