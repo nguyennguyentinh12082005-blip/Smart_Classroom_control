@@ -407,16 +407,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (key === 'ChuyenDong') {
                     console.log('[DEBUG] ChuyenDong value from Firebase:', val, 'Type:', typeof val);
-                    console.log('[DEBUG] presenceValue element:', presenceValue);
                     const hasMotion = val == 1 || val === true || val === '1' || val === 'motion';
                     console.log('[DEBUG] hasMotion calculated:', hasMotion);
                     if (presenceValue) {
                         presenceValue.textContent = hasMotion ? 'Có' : 'Không';
                         presenceValue.style.color = hasMotion ? '#27AE60' : '#E74C3C';
-                        console.log('[DEBUG] Updated presenceValue.textContent to:', presenceValue.textContent);
-                    } else {
-                        console.error('[DEBUG] presenceValue element is NULL!');
                     }
+
+                    // Disable/Enable all device toggles based on presence
+                    for (let i = 1; i <= DEVICE_COUNT; i++) {
+                        const lToggle = document.getElementById(`light-toggle-${i}`);
+                        const fToggle = document.getElementById(`fan-toggle-${i}`);
+                        if (lToggle) lToggle.disabled = !hasMotion;
+                        if (fToggle) fToggle.disabled = !hasMotion;
+                    }
+                    // Disable/Enable master buttons
+                    if (masterOn) masterOn.disabled = !hasMotion;
+                    if (masterOff) masterOff.disabled = !hasMotion;
                 } else {
                     if (key === 'NhietDo') {
                         tempValue.textContent = val !== null ? val : '--';
