@@ -234,7 +234,7 @@ void firebaseTask(void *pv) {
       json.set("DoAm", h);
       json.set("AnhSang", lux);
       json.set("ChuyenDong", pir);
-      json.set("AutoMode", autoModeLocal);
+      // Note: don't send AutoMode back - it should only be controlled by web
 
       if (!Firebase.setJSON(firebaseData, ROOM_PATH, json)) {
         Serial.print("[FB][ERR] "); Serial.println(firebaseData.errorReason());

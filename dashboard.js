@@ -503,9 +503,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Device Control Functions ---
     function toggleLight(index, isOn) {
-        if (!currentRoomId) return;
+        console.log('[DEBUG] toggleLight called:', index, isOn, 'roomId:', currentRoomId);
+        if (!currentRoomId) {
+            console.error('[DEBUG] No currentRoomId!');
+            return;
+        }
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/CMD/Den${index}`).set(val)
+        const path = `Rooms/${currentRoomId}/CMD/Den${index}`;
+        console.log('[DEBUG] Writing to path:', path, 'value:', val);
+        db.ref(path).set(val)
+            .then(() => console.log('[DEBUG] Light toggle success!'))
             .catch(err => {
                 console.error('Error toggling light:', err);
                 showToast(`Lỗi bật/tắt đèn: ${err.message}`, 'error');
@@ -513,9 +520,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleFan(index, isOn) {
-        if (!currentRoomId) return;
+        console.log('[DEBUG] toggleFan called:', index, isOn, 'roomId:', currentRoomId);
+        if (!currentRoomId) {
+            console.error('[DEBUG] No currentRoomId!');
+            return;
+        }
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/CMD/Quat${index}`).set(val)
+        const path = `Rooms/${currentRoomId}/CMD/Quat${index}`;
+        console.log('[DEBUG] Writing to path:', path, 'value:', val);
+        db.ref(path).set(val)
+            .then(() => console.log('[DEBUG] Fan toggle success!'))
             .catch(err => {
                 console.error('Error toggling fan:', err);
                 showToast(`Lỗi bật/tắt quạt: ${err.message}`, 'error');
