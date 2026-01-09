@@ -1204,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.lights[index] = isOn;
 
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/Den${index}`).set(val)
+        db.ref(`Rooms/${currentRoomId}/CMD/Den${index}`).set(val)
             .catch(err => {
                 showToast(`Lỗi: ` + err.message, 'error');
                 updateLightUI(index, !isOn);
@@ -1220,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.fans[index] = isOn;
 
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/Quat${index}`).set(val)
+        db.ref(`Rooms/${currentRoomId}/CMD/Quat${index}`).set(val)
             .catch(err => {
                 showToast(`Lỗi: ` + err.message, 'error');
                 updateFanUI(index, !isOn);
@@ -1254,8 +1254,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Rooms/${currentRoomId}/Den${i}`] = 0;
-            updates[`Rooms/${currentRoomId}/Quat${i}`] = 0;
+            updates[`Rooms/${currentRoomId}/CMD/Den${i}`] = 0;
+            updates[`Rooms/${currentRoomId}/CMD/Quat${i}`] = 0;
         }
         db.ref().update(updates)
             .then(() => showToast('Đã tắt tất cả'))
@@ -1277,8 +1277,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Rooms/${currentRoomId}/Den${i}`] = 1;
-            updates[`Rooms/${currentRoomId}/Quat${i}`] = 1;
+            updates[`Rooms/${currentRoomId}/CMD/Den${i}`] = 1;
+            updates[`Rooms/${currentRoomId}/CMD/Quat${i}`] = 1;
         }
         db.ref().update(updates)
             .then(() => showToast('Đã bật tất cả', 'success'))

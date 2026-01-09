@@ -204,13 +204,50 @@ void firebaseTask(void *pv) {
       int d1=g_cmdDen1, d2=g_cmdDen2, d3=g_cmdDen3;
       int q1=g_cmdQuat1, q2=g_cmdQuat2, q3=g_cmdQuat3;
 
-      if (Firebase.getBool(firebaseData, pAuto)) autoModeLocal = firebaseData.boolData();
-      if (Firebase.getInt(firebaseData, pD1)) d1 = firebaseData.intData();
-      if (Firebase.getInt(firebaseData, pD2)) d2 = firebaseData.intData();
-      if (Firebase.getInt(firebaseData, pD3)) d3 = firebaseData.intData();
-      if (Firebase.getInt(firebaseData, pQ1)) q1 = firebaseData.intData();
-      if (Firebase.getInt(firebaseData, pQ2)) q2 = firebaseData.intData();
-      if (Firebase.getInt(firebaseData, pQ3)) q3 = firebaseData.intData();
+      // Debug: print paths being used
+      Serial.print("[FB][PATH] Reading from: "); Serial.println(pD1);
+      
+      if (Firebase.getBool(firebaseData, pAuto)) {
+        autoModeLocal = firebaseData.boolData();
+      } else {
+        Serial.print("[FB][ERR] Auto: "); Serial.println(firebaseData.errorReason());
+      }
+      
+      if (Firebase.getInt(firebaseData, pD1)) {
+        d1 = firebaseData.intData();
+      } else {
+        Serial.print("[FB][ERR] D1: "); Serial.println(firebaseData.errorReason());
+      }
+      
+      if (Firebase.getInt(firebaseData, pD2)) {
+        d2 = firebaseData.intData();
+      } else {
+        Serial.print("[FB][ERR] D2: "); Serial.println(firebaseData.errorReason());
+      }
+      
+      if (Firebase.getInt(firebaseData, pD3)) {
+        d3 = firebaseData.intData();
+      } else {
+        Serial.print("[FB][ERR] D3: "); Serial.println(firebaseData.errorReason());
+      }
+      
+      if (Firebase.getInt(firebaseData, pQ1)) {
+        q1 = firebaseData.intData();
+      } else {
+        Serial.print("[FB][ERR] Q1: "); Serial.println(firebaseData.errorReason());
+      }
+      
+      if (Firebase.getInt(firebaseData, pQ2)) {
+        q2 = firebaseData.intData();
+      } else {
+        Serial.print("[FB][ERR] Q2: "); Serial.println(firebaseData.errorReason());
+      }
+      
+      if (Firebase.getInt(firebaseData, pQ3)) {
+        q3 = firebaseData.intData();
+      } else {
+        Serial.print("[FB][ERR] Q3: "); Serial.println(firebaseData.errorReason());
+      }
 
       if (xSemaphoreTake(gMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
         g_autoMode = autoModeLocal;
@@ -300,6 +337,43 @@ void setup() {
 
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
+
+  // Initialize CMD paths if they don't exist (run once at startup)
+  Serial.println("[FB] Waiting for Firebase ready...");
+  delay(3000); // Wait for Firebase connection
+  
+  // Wait for Firebase to be ready
+  int waitCount = 0;
+  while (!Firebase.ready() && waitCount < 20) {
+    delay(500);
+    waitCount++;
+    Serial.print(".");
+  }
+  Serial.println();
+  
+  if (Firebase.ready()) {
+    Serial.println("[FB] Firebase ready! Initializing CMD paths...");
+    String basePath = String(ROOM_PATH);
+    Serial.print("[FB] Base path: "); Serial.println(basePath);
+    
+    // Use set to create paths - with error checking
+    if (Firebase.setInt(firebaseData, basePath + "/CMD/Den1", 0)) {
+      Serial.println("[FB] Den1 OK");
+    } else {
+      Serial.print("[FB] Den1 FAIL: "); Serial.println(firebaseData.errorReason());
+    }
+    
+    Firebase.setInt(firebaseData, basePath + "/CMD/Den2", 0);
+    Firebase.setInt(firebaseData, basePath + "/CMD/Den3", 0);
+    Firebase.setInt(firebaseData, basePath + "/CMD/Quat1", 0);
+    Firebase.setInt(firebaseData, basePath + "/CMD/Quat2", 0);
+    Firebase.setInt(firebaseData, basePath + "/CMD/Quat3", 0);
+    Firebase.setBool(firebaseData, basePath + "/AutoMode", true);
+    
+    Serial.println("[FB] CMD paths initialized!");
+  } else {
+    Serial.println("[FB][ERR] Firebase not ready - cannot initialize paths!");
+  }
 
   xTaskCreatePinnedToCore(firebaseTask, "firebaseTask", 8192, nullptr, 1, nullptr, 0);
 }
