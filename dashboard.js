@@ -448,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Devices
         for (let i = 1; i <= DEVICE_COUNT; i++) {
             // Lights
-            const lightRef = db.ref(`${basePath}/CMD/Den${i}`);
+            const lightRef = db.ref(`${basePath}/Den${i}`);
             const lightCb = (snap) => {
                 const isOn = snap.val() == 1 || snap.val() === true;
                 state.lights[i] = isOn;
@@ -460,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
             activeListeners.push({ ref: lightRef, event: 'value', callback: lightCb });
 
             // Fans
-            const fanRef = db.ref(`${basePath}/CMD/Quat${i}`);
+            const fanRef = db.ref(`${basePath}/Quat${i}`);
             const fanCb = (snap) => {
                 const isOn = snap.val() == 1 || snap.val() === true;
                 state.fans[i] = isOn;
@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const val = isOn ? 1 : 0;
-        const path = `Rooms/${currentRoomId}/CMD/Den${index}`;
+        const path = `Rooms/${currentRoomId}/Den${index}`;
         console.log('[DEBUG] Writing to path:', path, 'value:', val);
         db.ref(path).set(val)
             .then(() => console.log('[DEBUG] Light toggle success!'))
@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const val = isOn ? 1 : 0;
-        const path = `Rooms/${currentRoomId}/CMD/Quat${index}`;
+        const path = `Rooms/${currentRoomId}/Quat${index}`;
         console.log('[DEBUG] Writing to path:', path, 'value:', val);
         db.ref(path).set(val)
             .then(() => console.log('[DEBUG] Fan toggle success!'))
@@ -541,8 +541,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentRoomId) return;
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`CMD/Den${i}`] = 1;
-            updates[`CMD/Quat${i}`] = 1;
+            updates[`Den${i}`] = 1;
+            updates[`Quat${i}`] = 1;
         }
         db.ref(`Rooms/${currentRoomId}`).update(updates)
             .catch(err => {
@@ -555,8 +555,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentRoomId) return;
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`CMD/Den${i}`] = 0;
-            updates[`CMD/Quat${i}`] = 0;
+            updates[`Den${i}`] = 0;
+            updates[`Quat${i}`] = 0;
         }
         db.ref(`Rooms/${currentRoomId}`).update(updates)
             .catch(err => {
@@ -1204,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.lights[index] = isOn;
 
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/CMD/Den${index}`).set(val)
+        db.ref(`Rooms/${currentRoomId}/Den${index}`).set(val)
             .catch(err => {
                 showToast(`Lỗi: ` + err.message, 'error');
                 updateLightUI(index, !isOn);
@@ -1220,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.fans[index] = isOn;
 
         const val = isOn ? 1 : 0;
-        db.ref(`Rooms/${currentRoomId}/CMD/Quat${index}`).set(val)
+        db.ref(`Rooms/${currentRoomId}/Quat${index}`).set(val)
             .catch(err => {
                 showToast(`Lỗi: ` + err.message, 'error');
                 updateFanUI(index, !isOn);
@@ -1254,8 +1254,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Rooms/${currentRoomId}/CMD/Den${i}`] = 0;
-            updates[`Rooms/${currentRoomId}/CMD/Quat${i}`] = 0;
+            updates[`Rooms/${currentRoomId}/Den${i}`] = 0;
+            updates[`Rooms/${currentRoomId}/Quat${i}`] = 0;
         }
         db.ref().update(updates)
             .then(() => showToast('Đã tắt tất cả'))
@@ -1277,8 +1277,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const updates = {};
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Rooms/${currentRoomId}/CMD/Den${i}`] = 1;
-            updates[`Rooms/${currentRoomId}/CMD/Quat${i}`] = 1;
+            updates[`Rooms/${currentRoomId}/Den${i}`] = 1;
+            updates[`Rooms/${currentRoomId}/Quat${i}`] = 1;
         }
         db.ref().update(updates)
             .then(() => showToast('Đã bật tất cả', 'success'))
