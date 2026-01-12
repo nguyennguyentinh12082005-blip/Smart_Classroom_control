@@ -502,68 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Device Control Functions ---
-    function toggleLight(index, isOn) {
-        console.log('[DEBUG] toggleLight called:', index, isOn, 'roomId:', currentRoomId);
-        if (!currentRoomId) {
-            console.error('[DEBUG] No currentRoomId!');
-            return;
-        }
-        const val = isOn ? 1 : 0;
-        const path = `Rooms/${currentRoomId}/Den${index}`;
-        console.log('[DEBUG] Writing to path:', path, 'value:', val);
-        db.ref(path).set(val)
-            .then(() => console.log('[DEBUG] Light toggle success!'))
-            .catch(err => {
-                console.error('Error toggling light:', err);
-                showToast(`Lỗi bật/tắt đèn: ${err.message}`, 'error');
-            });
-    }
-
-    function toggleFan(index, isOn) {
-        console.log('[DEBUG] toggleFan called:', index, isOn, 'roomId:', currentRoomId);
-        if (!currentRoomId) {
-            console.error('[DEBUG] No currentRoomId!');
-            return;
-        }
-        const val = isOn ? 1 : 0;
-        const path = `Rooms/${currentRoomId}/Quat${index}`;
-        console.log('[DEBUG] Writing to path:', path, 'value:', val);
-        db.ref(path).set(val)
-            .then(() => console.log('[DEBUG] Fan toggle success!'))
-            .catch(err => {
-                console.error('Error toggling fan:', err);
-                showToast(`Lỗi bật/tắt quạt: ${err.message}`, 'error');
-            });
-    }
-
-
-    function turnAllOn() {
-        if (!currentRoomId) return;
-        const updates = {};
-        for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Den${i}`] = 1;
-            updates[`Quat${i}`] = 1;
-        }
-        db.ref(`Rooms/${currentRoomId}`).update(updates)
-            .catch(err => {
-                console.error('Error turning all on:', err);
-                showToast(`Lỗi bật tất cả: ${err.message}`, 'error');
-            });
-    }
-
-    function turnAllOff() {
-        if (!currentRoomId) return;
-        const updates = {};
-        for (let i = 1; i <= DEVICE_COUNT; i++) {
-            updates[`Den${i}`] = 0;
-            updates[`Quat${i}`] = 0;
-        }
-        db.ref(`Rooms/${currentRoomId}`).update(updates)
-            .catch(err => {
-                console.error('Error turning all off:', err);
-                showToast(`Lỗi tắt tất cả: ${err.message}`, 'error');
-            });
-    }
+    // (defined later in the file with optimistic UI updates)
 
     // --- Statistics ---
     function loadStatistics() {

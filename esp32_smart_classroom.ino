@@ -21,10 +21,11 @@
 static const char *ROOM_PATH = "Rooms/A101";
 
 // ================= PINS =================
-#define PIR_PIN 21
-#define DHTPIN 14
+#define PIR_PIN 21    // PIR sensor
+#define DHTPIN 14     // DHT11 Data pin
+#define DHT_LED_PIN 2 // LED indicator cho DHT11
 #define LDR_PIN 34
-#define DHTTYPE DHT22
+#define DHTTYPE DHT11
 
 // ===== Relay IN pins =====
 int PIN_DEN1 = 13;
@@ -57,7 +58,8 @@ static const uint32_t DHT_PERIOD_MS = 2000;
 static const uint32_t PRINT_PERIOD_MS = 1000;
 
 static const uint32_t FB_SEND_MS = 5000;
-static const uint32_t FB_READ_MS = 800;
+static const uint32_t FB_READ_MS =
+    200; // Giảm từ 800ms xuống 200ms để phản hồi nhanh hơn
 
 // ================= STATE =================
 struct RelayState {
@@ -314,7 +316,7 @@ void firebaseTask(void *pv) {
       json.set("ChuyenDong", pir);
       // Note: don't send AutoMode back - it should only be controlled by web
 
-      if (!Firebase.setJSON(firebaseData, ROOM_PATH, json)) {
+      if (!Firebase.updateNode(firebaseData, ROOM_PATH, json)) {
         Serial.print("[FB][ERR] ");
         Serial.println(firebaseData.errorReason());
       }
@@ -330,8 +332,10 @@ void setup() {
   delay(400);
   Serial.println("\n=== ESP32 START ===");
 
-  pinMode(PIR_PIN, INPUT_PULLDOWN);
+  pinMode(PIR_PIN, INPUT_PULLDOWN); // PIR sensor
   pinMode(LDR_PIN, INPUT);
+  pinMode(DHT_LED_PIN, OUTPUT);   // LED indicator cho DHT11
+  digitalWrite(DHT_LED_PIN, LOW); // Tắt LED ban đầu
 
   pinMode(PIN_DEN1, OUTPUT);
   pinMode(PIN_DEN2, OUTPUT);
@@ -444,25 +448,34 @@ void loop() {
   if (now - pirChangeAt >= PIR_STABLE_MS)
     pirStable = pirRawLast;
 
-  // ---- DHT ----
+  // ---- DHT11 với LED indicator ----
   static uint32_t lastDHT = 0;
   static float t = 0, h = 0;
   static int dhtFail = 0;
 
   if (now - lastDHT >= DHT_PERIOD_MS) {
     lastDHT = now;
+
+    // Nhấp nháy LED khi đang đọc DHT11
+    digitalWrite(DHT_LED_PIN, HIGH);
+
     float tn = dht.readTemperature();
     float hn = dht.readHumidity();
 
     if (isnan(tn) || isnan(hn)) {
       dhtFail++;
-      Serial.print("[DHT][ERR] Read failed (");
+      Serial.print("[DHT11][ERR] Read failed (");
       Serial.print(dhtFail);
       Serial.println(")");
+      // LED tắt nếu lỗi
+      digitalWrite(DHT_LED_PIN, LOW);
     } else {
       dhtFail = 0;
-      t = tn - 2.0f;
+      t = tn; // DHT11 không cần offset như DHT22
       h = hn;
+      // LED sáng ngắn rồi tắt khi đọc thành công
+      delay(50);
+      digitalWrite(DHT_LED_PIN, LOW);
     }
   }
 
