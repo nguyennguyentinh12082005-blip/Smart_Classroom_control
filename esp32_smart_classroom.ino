@@ -57,7 +57,8 @@ static const uint32_t PIR_WARMUP_MS = 10000;
 static const uint32_t DHT_PERIOD_MS = 2000;
 static const uint32_t PRINT_PERIOD_MS = 1000;
 
-static const uint32_t FB_SEND_MS = 5000;
+static const uint32_t FB_SEND_MS =
+    1000; // Gửi trạng thái mỗi 1 giây (giảm từ 5s)
 static const uint32_t FB_READ_MS =
     200; // Giảm từ 800ms xuống 200ms để phản hồi nhanh hơn
 
@@ -67,6 +68,10 @@ struct RelayState {
   bool quat1 = false, quat2 = false, quat3 = false;
 };
 RelayState g_state;
+
+// Actual relay states (for sending back to Firebase in AUTO mode)
+int g_actualDen1 = 0, g_actualDen2 = 0, g_actualDen3 = 0;
+int g_actualQuat1 = 0, g_actualQuat2 = 0, g_actualQuat3 = 0;
 
 // shared sensor
 float g_t = 0, g_h = 0;
@@ -92,6 +97,17 @@ void applyState(const RelayState &s) {
   writeRelay(PIN_QUAT1, s.quat1);
   writeRelay(PIN_QUAT2, s.quat2);
   writeRelay(PIN_QUAT3, s.quat3);
+
+  // Save actual states for Firebase sync
+  if (xSemaphoreTake(gMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+    g_actualDen1 = s.den1 ? 1 : 0;
+    g_actualDen2 = s.den2 ? 1 : 0;
+    g_actualDen3 = s.den3 ? 1 : 0;
+    g_actualQuat1 = s.quat1 ? 1 : 0;
+    g_actualQuat2 = s.quat2 ? 1 : 0;
+    g_actualQuat3 = s.quat3 ? 1 : 0;
+    xSemaphoreGive(gMutex);
+  }
 }
 
 String joinPath(const char *base, const char *sub) {
@@ -309,16 +325,47 @@ void firebaseTask(void *pv) {
       } else
         continue;
 
+      // Get actual relay states
+      int aDen1, aDen2, aDen3, aQuat1, aQuat2, aQuat3;
+      if (xSemaphoreTake(gMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        aDen1 = g_actualDen1;
+        aDen2 = g_actualDen2;
+        aDen3 = g_actualDen3;
+        aQuat1 = g_actualQuat1;
+        aQuat2 = g_actualQuat2;
+        aQuat3 = g_actualQuat3;
+        xSemaphoreGive(gMutex);
+      } else {
+        aDen1 = aDen2 = aDen3 = aQuat1 = aQuat2 = aQuat3 = 0;
+      }
+
       FirebaseJson json;
       json.set("NhietDo", t);
       json.set("DoAm", h);
       json.set("AnhSang", lux);
       json.set("ChuyenDong", pir);
+
+      // Send actual relay states to Firebase (so web can display real status)
+      json.set("ActualDen1", aDen1);
+      json.set("ActualDen2", aDen2);
+      json.set("ActualDen3", aDen3);
+      json.set("ActualQuat1", aQuat1);
+      json.set("ActualQuat2", aQuat2);
+      json.set("ActualQuat3", aQuat3);
       // Note: don't send AutoMode back - it should only be controlled by web
 
       if (!Firebase.updateNode(firebaseData, ROOM_PATH, json)) {
         Serial.print("[FB][ERR] ");
         Serial.println(firebaseData.errorReason());
+      } else {
+        Serial.print("[FB][SEND] Actual: D=");
+        Serial.print(aDen1);
+        Serial.print(aDen2);
+        Serial.print(aDen3);
+        Serial.print(" Q=");
+        Serial.print(aQuat1);
+        Serial.print(aQuat2);
+        Serial.println(aQuat3);
       }
     }
   }

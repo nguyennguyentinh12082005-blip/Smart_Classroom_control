@@ -445,31 +445,65 @@ document.addEventListener('DOMContentLoaded', () => {
             activeListeners.push({ ref: ref, event: 'value', callback: cb });
         });
 
-        // Devices
+        // Devices - Listen to both command values and actual values
         for (let i = 1; i <= DEVICE_COUNT; i++) {
-            // Lights
+            // Lights - command values (for manual mode)
             const lightRef = db.ref(`${basePath}/Den${i}`);
             const lightCb = (snap) => {
                 const isOn = snap.val() == 1 || snap.val() === true;
                 state.lights[i] = isOn;
-                const toggle = document.getElementById(`light-toggle-${i}`);
-                if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
-                updateLightUI(i, isOn);
+                // Only update UI if NOT in auto mode
+                if (!autoModeToggle || !autoModeToggle.checked) {
+                    const toggle = document.getElementById(`light-toggle-${i}`);
+                    if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
+                    updateLightUI(i, isOn);
+                }
             };
             lightRef.on('value', lightCb);
             activeListeners.push({ ref: lightRef, event: 'value', callback: lightCb });
 
-            // Fans
+            // Lights - ACTUAL values (for auto mode display)
+            const actualLightRef = db.ref(`${basePath}/ActualDen${i}`);
+            const actualLightCb = (snap) => {
+                const isOn = snap.val() == 1 || snap.val() === true;
+                // Only update UI if in auto mode
+                if (autoModeToggle && autoModeToggle.checked) {
+                    const toggle = document.getElementById(`light-toggle-${i}`);
+                    if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
+                    updateLightUI(i, isOn);
+                }
+            };
+            actualLightRef.on('value', actualLightCb);
+            activeListeners.push({ ref: actualLightRef, event: 'value', callback: actualLightCb });
+
+            // Fans - command values (for manual mode)
             const fanRef = db.ref(`${basePath}/Quat${i}`);
             const fanCb = (snap) => {
                 const isOn = snap.val() == 1 || snap.val() === true;
                 state.fans[i] = isOn;
-                const toggle = document.getElementById(`fan-toggle-${i}`);
-                if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
-                updateFanUI(i, isOn);
+                // Only update UI if NOT in auto mode
+                if (!autoModeToggle || !autoModeToggle.checked) {
+                    const toggle = document.getElementById(`fan-toggle-${i}`);
+                    if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
+                    updateFanUI(i, isOn);
+                }
             };
             fanRef.on('value', fanCb);
             activeListeners.push({ ref: fanRef, event: 'value', callback: fanCb });
+
+            // Fans - ACTUAL values (for auto mode display)
+            const actualFanRef = db.ref(`${basePath}/ActualQuat${i}`);
+            const actualFanCb = (snap) => {
+                const isOn = snap.val() == 1 || snap.val() === true;
+                // Only update UI if in auto mode
+                if (autoModeToggle && autoModeToggle.checked) {
+                    const toggle = document.getElementById(`fan-toggle-${i}`);
+                    if (toggle && toggle.checked !== isOn) toggle.checked = isOn;
+                    updateFanUI(i, isOn);
+                }
+            };
+            actualFanRef.on('value', actualFanCb);
+            activeListeners.push({ ref: actualFanRef, event: 'value', callback: actualFanCb });
         }
 
         // Auto Mode - just listen, don't force to true
@@ -491,6 +525,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (masterOn) masterOn.disabled = isAuto;
             if (masterOff) masterOff.disabled = isAuto;
+
+            // When switching modes, force refresh actual values
+            if (isAuto) {
+                // Read actual values immediately when switching to AUTO
+                for (let i = 1; i <= DEVICE_COUNT; i++) {
+                    db.ref(`${basePath}/ActualDen${i}`).once('value', (s) => {
+                        const isOn = s.val() == 1;
+                        const toggle = document.getElementById(`light-toggle-${i}`);
+                        if (toggle) toggle.checked = isOn;
+                        updateLightUI(i, isOn);
+                    });
+                    db.ref(`${basePath}/ActualQuat${i}`).once('value', (s) => {
+                        const isOn = s.val() == 1;
+                        const toggle = document.getElementById(`fan-toggle-${i}`);
+                        if (toggle) toggle.checked = isOn;
+                        updateFanUI(i, isOn);
+                    });
+                }
+            }
         };
         autoModeRef.on('value', autoModeCb);
         activeListeners.push({ ref: autoModeRef, event: 'value', callback: autoModeCb });
