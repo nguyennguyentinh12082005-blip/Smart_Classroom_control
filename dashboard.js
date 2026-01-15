@@ -1427,11 +1427,41 @@ document.addEventListener('DOMContentLoaded', () => {
     if (masterOn) masterOn.addEventListener('click', turnAllOn);
 
     if (autoModeToggle) {
-        autoModeToggle.addEventListener('change', (e) => {
+        autoModeToggle.addEventListener('change', async (e) => {
             if (!currentRoomId) return;
             const isAuto = e.target.checked;
-            db.ref(`Rooms/${currentRoomId}/AutoMode`).set(isAuto)
-                .catch(err => showToast(`Lỗi: ` + err.message, 'error'));
+
+            // When switching from AUTO to MANUAL, copy actual states to commands
+            // so devices stay ON if they were ON
+            if (!isAuto) {
+                try {
+                    const updates = {};
+                    for (let i = 1; i <= DEVICE_COUNT; i++) {
+                        // Read actual states
+                        const actualDenSnap = await db.ref(`Rooms/${currentRoomId}/ActualDen${i}`).once('value');
+                        const actualQuatSnap = await db.ref(`Rooms/${currentRoomId}/ActualQuat${i}`).once('value');
+
+                        const denState = actualDenSnap.val() == 1 ? 1 : 0;
+                        const quatState = actualQuatSnap.val() == 1 ? 1 : 0;
+
+                        // Copy to command values
+                        updates[`Rooms/${currentRoomId}/Den${i}`] = denState;
+                        updates[`Rooms/${currentRoomId}/Quat${i}`] = quatState;
+                    }
+
+                    // Apply all updates + set AutoMode to false
+                    updates[`Rooms/${currentRoomId}/AutoMode`] = false;
+                    await db.ref().update(updates);
+
+                    console.log('[AUTO->MANUAL] Copied actual states to commands');
+                } catch (err) {
+                    showToast(`Lỗi: ` + err.message, 'error');
+                }
+            } else {
+                // Just set AUTO mode
+                db.ref(`Rooms/${currentRoomId}/AutoMode`).set(isAuto)
+                    .catch(err => showToast(`Lỗi: ` + err.message, 'error'));
+            }
         });
     }
 

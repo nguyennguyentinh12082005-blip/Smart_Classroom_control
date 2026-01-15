@@ -57,10 +57,8 @@ static const uint32_t PIR_WARMUP_MS = 10000;
 static const uint32_t DHT_PERIOD_MS = 2000;
 static const uint32_t PRINT_PERIOD_MS = 1000;
 
-static const uint32_t FB_SEND_MS =
-    1000; // Gửi trạng thái mỗi 1 giây (giảm từ 5s)
-static const uint32_t FB_READ_MS =
-    200; // Giảm từ 800ms xuống 200ms để phản hồi nhanh hơn
+static const uint32_t FB_SEND_MS = 200; // 5Hz update
+static const uint32_t FB_READ_MS = 10;  // Max polling speed
 
 // ================= STATE =================
 struct RelayState {
@@ -99,7 +97,8 @@ void applyState(const RelayState &s) {
   writeRelay(PIN_QUAT3, s.quat3);
 
   // Save actual states for Firebase sync
-  if (xSemaphoreTake(gMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+  // Check if mutex exists (may not be initialized during early setup)
+  if (gMutex != NULL && xSemaphoreTake(gMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
     g_actualDen1 = s.den1 ? 1 : 0;
     g_actualDen2 = s.den2 ? 1 : 0;
     g_actualDen3 = s.den3 ? 1 : 0;
@@ -200,7 +199,7 @@ void firebaseTask(void *pv) {
   const String pQ3 = joinPath(ROOM_PATH, "Quat3");
 
   for (;;) {
-    vTaskDelay(pdMS_TO_TICKS(80));
+    vTaskDelay(pdMS_TO_TICKS(5)); // Minimized loop delay (5ms)
 
     // Debug connection status every 5 seconds
     static uint32_t lastStatus = 0;
@@ -231,52 +230,48 @@ void firebaseTask(void *pv) {
       Serial.print("[FB][PATH] Reading from: ");
       Serial.println(pD1);
 
-      if (Firebase.getBool(firebaseData, pAuto)) {
-        autoModeLocal = firebaseData.boolData();
-      } else {
-        Serial.print("[FB][ERR] Auto: ");
-        Serial.println(firebaseData.errorReason());
-      }
+      // ===== OPTIMIZED READ: Get whole JSON object in 1 request =====
+      if (Firebase.get(firebaseData, ROOM_PATH)) {
+        // Success - parse JSON
+        FirebaseJson &json = firebaseData.jsonObject();
 
-      if (Firebase.getInt(firebaseData, pD1)) {
-        d1 = firebaseData.intData();
-      } else {
-        Serial.print("[FB][ERR] D1: ");
-        Serial.println(firebaseData.errorReason());
-      }
+        FirebaseJsonData jsonData;
 
-      if (Firebase.getInt(firebaseData, pD2)) {
-        d2 = firebaseData.intData();
-      } else {
-        Serial.print("[FB][ERR] D2: ");
-        Serial.println(firebaseData.errorReason());
-      }
+        // AutoMode
+        if (json.get(jsonData, "AutoMode") && jsonData.success) {
+          autoModeLocal = jsonData.boolValue;
+        }
 
-      if (Firebase.getInt(firebaseData, pD3)) {
-        d3 = firebaseData.intData();
-      } else {
-        Serial.print("[FB][ERR] D3: ");
-        Serial.println(firebaseData.errorReason());
-      }
+        // Den1
+        if (json.get(jsonData, "Den1") && jsonData.success) {
+          d1 = jsonData.intValue;
+        }
+        // Den2
+        if (json.get(jsonData, "Den2") && jsonData.success) {
+          d2 = jsonData.intValue;
+        }
+        // Den3
+        if (json.get(jsonData, "Den3") && jsonData.success) {
+          d3 = jsonData.intValue;
+        }
 
-      if (Firebase.getInt(firebaseData, pQ1)) {
-        q1 = firebaseData.intData();
-      } else {
-        Serial.print("[FB][ERR] Q1: ");
-        Serial.println(firebaseData.errorReason());
-      }
+        // Quat1
+        if (json.get(jsonData, "Quat1") && jsonData.success) {
+          q1 = jsonData.intValue;
+        }
+        // Quat2
+        if (json.get(jsonData, "Quat2") && jsonData.success) {
+          q2 = jsonData.intValue;
+        }
+        // Quat3
+        if (json.get(jsonData, "Quat3") && jsonData.success) {
+          q3 = jsonData.intValue;
+        }
 
-      if (Firebase.getInt(firebaseData, pQ2)) {
-        q2 = firebaseData.intData();
+        // Clear error flags if read successful
+        Serial.println("[FB][READ] OK");
       } else {
-        Serial.print("[FB][ERR] Q2: ");
-        Serial.println(firebaseData.errorReason());
-      }
-
-      if (Firebase.getInt(firebaseData, pQ3)) {
-        q3 = firebaseData.intData();
-      } else {
-        Serial.print("[FB][ERR] Q3: ");
+        Serial.print("[FB][ERR] Read failed: ");
         Serial.println(firebaseData.errorReason());
       }
 
@@ -391,10 +386,11 @@ void setup() {
   pinMode(PIN_QUAT2, OUTPUT);
   pinMode(PIN_QUAT3, OUTPUT);
 
+  // Create mutex BEFORE applyState (applyState uses mutex)
+  gMutex = xSemaphoreCreateMutex();
+
   applyState(RelayState()); // tắt hết
   dht.begin();
-
-  gMutex = xSemaphoreCreateMutex();
 
   // WiFi
   WiFi.mode(WIFI_STA);
